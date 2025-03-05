@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tic Tac Toe 4x4 vs AI</title>
+    <title>Tic Tac Toe 4x4</title>
     <style>
         .board {
             display: grid;
@@ -34,17 +34,21 @@
             font-family: Arial, sans-serif;
         }
         
-        #reset {
-            display: block;
-            margin: 20px auto;
+        #controls {
+            text-align: center;
+            margin: 20px;
+        }
+        
+        button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            margin: 0 10px;
         }
     </style>
 </head>
 <body>
-    <div id="status">Your turn (🐱)</div>
+    <div id="status">Player 1's turn (🐱)</div>
     <div class="board" id="board">
         <div class="cell" data-index="0"></div>
         <div class="cell" data-index="1"></div>
@@ -63,26 +67,31 @@
         <div class="cell" data-index="14"></div>
         <div class="cell" data-index="15"></div>
     </div>
-    <button id="reset">Reset Game</button>
+    <div id="controls">
+        <button id="playWithAI">Play with AI</button>
+        <button id="playWithFriend">Play with Friend</button>
+        <button id="reset">Reset Game</button>
+    </div>
 
     <script>
         const board = document.getElementById('board');
         const cells = document.querySelectorAll('.cell');
         const status = document.getElementById('status');
         const resetButton = document.getElementById('reset');
+        const playWithAIButton = document.getElementById('playWithAI');
+        const playWithFriendButton = document.getElementById('playWithFriend');
         
         let gameBoard = Array(16).fill('');
         let gameActive = true;
-        const PLAYER = '🐱';
-        const AI = '🐶';
+        let currentPlayer = 1;
+        let isAIActive = false;
+        const PLAYER1 = '🐱';
+        const PLAYER2 = '🐶';
 
         const winningCombinations = [
-            // Horizontal (4 in a row)
-            [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
-            // Vertical (4 in a row)
-            [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
-            // Diagonal (4 in a row)
-            [0, 5, 10, 15], [3, 6, 9, 12]
+            [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15], // Horizontal
+            [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15], // Vertical
+            [0, 5, 10, 15], [3, 6, 9, 12] // Diagonal
         ];
 
         function handleCellClick(e) {
@@ -93,11 +102,12 @@
 
             if (gameBoard[index] !== '') return;
 
-            // Player's move
-            makeMove(index, PLAYER);
+            // Make move
+            const playerSymbol = currentPlayer === 1 ? PLAYER1 : PLAYER2;
+            makeMove(index, playerSymbol);
             
-            if (checkWin(PLAYER)) {
-                status.textContent = "You win! (🐱)";
+            if (checkWin(playerSymbol)) {
+                status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer} wins! (${playerSymbol})`;
                 gameActive = false;
                 return;
             }
@@ -108,9 +118,13 @@
                 return;
             }
 
-            // AI's turn
-            status.textContent = "AI's turn (🐶)";
-            setTimeout(aiMove, 500);
+            // Switch players or trigger AI
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer}'s turn (${currentPlayer === 1 ? PLAYER1 : PLAYER2})`;
+            
+            if (isAIActive && currentPlayer === 2) {
+                setTimeout(aiMove, 500);
+            }
         }
 
         function makeMove(index, player) {
@@ -121,13 +135,13 @@
         function aiMove() {
             if (!gameActive) return;
 
-            let move = findWinningMove(AI) || findWinningMove(PLAYER) || 
-                     (gameBoard[5] === '' ? 5 : gameBoard[6] === '' ? 6 : getRandomMove()); // Prefer center positions
+            let move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || 
+                     (gameBoard[5] === '' ? 5 : gameBoard[6] === '' ? 6 : getRandomMove());
             
-            makeMove(move, AI);
+            makeMove(move, PLAYER2);
 
-            if (checkWin(AI)) {
-                status.textContent = "AI wins! (🐶)";
+            if (checkWin(PLAYER2)) {
+                status.textContent = `AI wins! (${PLAYER2})`;
                 gameActive = false;
                 return;
             }
@@ -138,7 +152,8 @@
                 return;
             }
 
-            status.textContent = "Your turn (🐱)";
+            currentPlayer = 1;
+            status.textContent = `Your turn (${PLAYER1})`;
         }
 
         function findWinningMove(player) {
@@ -177,12 +192,24 @@
         function resetGame() {
             gameBoard = Array(16).fill('');
             gameActive = true;
-            status.textContent = "Your turn (🐱)";
+            currentPlayer = 1;
+            status.textContent = `${isAIActive ? 'Your' : 'Player 1'}'s turn (${PLAYER1})`;
             cells.forEach(cell => cell.textContent = '');
+        }
+
+        function setAIActive(active) {
+            isAIActive = active;
+            resetGame();
+            status.textContent = `${isAIActive ? 'Your' : 'Player 1'}'s turn (${PLAYER1})`;
         }
 
         cells.forEach(cell => cell.addEventListener('click', handleCellClick));
         resetButton.addEventListener('click', resetGame);
+        playWithAIButton.addEventListener('click', () => setAIActive(true));
+        playWithFriendButton.addEventListener('click', () => setAIActive(false));
+
+        // Start in two-player mode by default
+        setAIActive(false);
     </script>
 </body>
 </html>
