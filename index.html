@@ -13,9 +13,9 @@
         .board {
             display: grid;
             gap: 5px;
-            background-color: #f0f0f0; /* Light background to see the grid */
+            background-color: #f0f0f0;
             padding: 10px;
-            border: 2px solid #000; /* Visible border */
+            border: 2px solid #000;
         }
         
         .cell {
@@ -27,11 +27,27 @@
             justify-content: center;
             font-size: 50px;
             cursor: pointer;
-            background-color: #fff; /* White background for cells */
+            background-color: #fff;
+            overflow: hidden; /* Ensure images don't overflow */
+        }
+        
+        .cell img {
+            max-width: 80%;
+            max-height: 80%;
         }
         
         .cell:hover {
             background-color: #e0e0e0;
+        }
+        
+        .winning-cell {
+            animation: winPulse 1s infinite;
+        }
+        
+        @keyframes winPulse {
+            0% { background-color: #fff; transform: scale(1); }
+            50% { background-color: #ffd700; transform: scale(1.1); }
+            100% { background-color: #fff; transform: scale(1); }
         }
         
         #status, #scores {
@@ -41,18 +57,29 @@
         
         #controls {
             margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
         }
         
-        button {
+        button, label {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             margin: 0 5px;
+            background-color: #ddd;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        
+        input[type="file"] {
+            display: none; /* Hide the default file input */
         }
     </style>
 </head>
 <body>
-    <div id="status">Player 1's turn (🧑‍🦳)</div>
+    <div id="status">Player 1's turn</div>
     <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
     <div class="board" id="board"></div>
     <div id="controls">
@@ -63,6 +90,10 @@
         <button id="playWithFriend">Play with Friend</button>
         <button id="reset">Reset Game</button>
         <button id="resetScores">Reset Scores</button>
+        <label for="player1Icon">Change Player 1 Icon</label>
+        <input type="file" id="player1Icon" accept="image/*">
+        <label for="player2Icon">Change Player 2 Icon</label>
+        <input type="file" id="player2Icon" accept="image/*">
     </div>
 
     <script>
@@ -76,16 +107,17 @@
         const size4x4Button = document.getElementById('size4x4');
         const size5x5Button = document.getElementById('size5x5');
         const resetScoresButton = document.getElementById('resetScores');
+        const player1IconInput = document.getElementById('player1Icon');
+        const player2IconInput = document.getElementById('player2Icon');
         
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
         let isAIActive = false;
         let boardSize = 3;
-        const PLAYER1 = '🧑‍🦳'; // Donald Trump
-        const PLAYER2 = '🧑‍🚀'; // Elon Musk
+        let PLAYER1 = localStorage.getItem('player1Icon') || '🧑‍🦳'; // Default Trump
+        let PLAYER2 = localStorage.getItem('player2Icon') || '🧑‍🚀'; // Default Musk
 
-        // Load or initialize scores
         let scores = JSON.parse(localStorage.getItem('ticTacToeScores')) || {
             '3': { player1: 0, player2: 0, draws: 0 },
             '4': { player1: 0, player2: 0, draws: 0 },
@@ -146,10 +178,9 @@
                 cell.setAttribute('data-index', i);
                 cell.addEventListener('click', handleCellClick);
                 board.appendChild(cell);
-                console.log(`Added cell ${i}`);
             }
-            console.log('Board created:', board.innerHTML);
             updateScoresDisplay();
+            updateStatus();
         }
 
         function handleCellClick(e) {
@@ -161,9 +192,11 @@
             const playerSymbol = currentPlayer === 1 ? PLAYER1 : PLAYER2;
             makeMove(index, playerSymbol);
             
-            if (checkWin(playerSymbol)) {
-                status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer} wins! (${playerSymbol})`;
+            const winningCombo = checkWin(playerSymbol);
+            if (winningCombo) {
+                status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer} wins!`;
                 gameActive = false;
+                highlightWinningCells(winningCombo);
                 updateScore(currentPlayer === 1 ? 'player1' : 'player2');
                 return;
             }
@@ -176,7 +209,7 @@
             }
 
             currentPlayer = currentPlayer === 1 ? 2 : 1;
-            status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer}'s turn (${currentPlayer === 1 ? PLAYER1 : PLAYER2})`;
+            updateStatus();
             
             if (isAIActive && currentPlayer === 2) {
                 setTimeout(aiMove, 500);
@@ -185,7 +218,11 @@
 
         function makeMove(index, player) {
             gameBoard[index] = player;
-            board.children[index].textContent = player;
+            const cell = board.children[index];
+            cell.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = player;
+            cell.appendChild(img);
         }
 
         function aiMove() {
@@ -196,9 +233,11 @@
             
             makeMove(move, PLAYER2);
 
-            if (checkWin(PLAYER2)) {
-                status.textContent = `AI wins! (${PLAYER2})`;
+            const winningCombo = checkWin(PLAYER2);
+            if (winningCombo) {
+                status.textContent = `AI wins!`;
                 gameActive = false;
+                highlightWinningCells(winningCombo);
                 updateScore('player2');
                 return;
             }
@@ -211,7 +250,7 @@
             }
 
             currentPlayer = 1;
-            status.textContent = `Your turn (${PLAYER1})`;
+            updateStatus();
         }
 
         function findWinningMove(player) {
@@ -245,13 +284,22 @@
         }
 
         function checkWin(player) {
-            return winningCombinations.some(combination => {
-                return combination.every(index => gameBoard[index] === player);
-            });
+            for (let combo of winningCombinations) {
+                if (combo.every(index => gameBoard[index] === player)) {
+                    return combo;
+                }
+            }
+            return null;
         }
 
         function checkDraw() {
             return gameBoard.every(cell => cell !== '');
+        }
+
+        function highlightWinningCells(winningCombo) {
+            winningCombo.forEach(index => {
+                board.children[index].classList.add('winning-cell');
+            });
         }
 
         function updateScore(winner) {
@@ -266,12 +314,19 @@
             scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
         }
 
+        function updateStatus() {
+            status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer}'s turn`;
+        }
+
         function resetGame() {
             gameBoard = Array(boardSize * boardSize).fill('');
             gameActive = true;
             currentPlayer = 1;
-            status.textContent = `${isAIActive ? 'Your' : 'Player 1'}'s turn (${PLAYER1})`;
-            Array.from(board.children).forEach(cell => cell.textContent = '');
+            updateStatus();
+            Array.from(board.children).forEach(cell => {
+                cell.innerHTML = '';
+                cell.classList.remove('winning-cell');
+            });
         }
 
         function setAIActive(active) {
@@ -295,6 +350,33 @@
             updateScoresDisplay();
             resetGame();
         }
+
+        // Handle icon uploads
+        player1IconInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    PLAYER1 = event.target.result;
+                    localStorage.setItem('player1Icon', PLAYER1);
+                    resetGame(); // Refresh board with new icon
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        player2IconInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    PLAYER2 = event.target.result;
+                    localStorage.setItem('player2Icon', PLAYER2);
+                    resetGame(); // Refresh board with new icon
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
         resetButton.addEventListener('click', resetGame);
         playWithAIButton.addEventListener('click', () => setAIActive(true));
