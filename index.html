@@ -3,47 +3,57 @@
 <head>
     <title>Tic Tac Toe</title>
     <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        
         .board {
             display: grid;
             gap: 5px;
-            margin: 20px auto;
+            background-color: #f0f0f0; /* Light background to see the grid */
+            padding: 10px;
+            border: 2px solid #000; /* Visible border */
         }
         
         .cell {
+            width: 90px;
+            height: 90px;
             border: 2px solid #333;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 50px;
             cursor: pointer;
+            background-color: #fff; /* White background for cells */
         }
         
         .cell:hover {
-            background-color: #f0f0f0;
+            background-color: #e0e0e0;
         }
         
-        #status {
-            text-align: center;
+        #status, #scores {
             font-size: 24px;
-            margin: 20px;
-            font-family: Arial, sans-serif;
+            margin: 20px 0;
         }
         
         #controls {
-            text-align: center;
-            margin: 20px;
+            margin: 20px 0;
         }
         
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
-            margin: 0 10px;
+            margin: 0 5px;
         }
     </style>
 </head>
 <body>
     <div id="status">Player 1's turn (🧑‍🦳)</div>
+    <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
     <div class="board" id="board"></div>
     <div id="controls">
         <button id="size3x3">3x3 (9 tiles)</button>
@@ -52,70 +62,68 @@
         <button id="playWithAI">Play with AI</button>
         <button id="playWithFriend">Play with Friend</button>
         <button id="reset">Reset Game</button>
+        <button id="resetScores">Reset Scores</button>
     </div>
 
     <script>
         const board = document.getElementById('board');
         const status = document.getElementById('status');
+        const scoresDisplay = document.getElementById('scores');
         const resetButton = document.getElementById('reset');
         const playWithAIButton = document.getElementById('playWithAI');
         const playWithFriendButton = document.getElementById('playWithFriend');
         const size3x3Button = document.getElementById('size3x3');
         const size4x4Button = document.getElementById('size4x4');
         const size5x5Button = document.getElementById('size5x5');
+        const resetScoresButton = document.getElementById('resetScores');
         
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
         let isAIActive = false;
-        let boardSize = 3; // Default 3x3
+        let boardSize = 3;
         const PLAYER1 = '🧑‍🦳'; // Donald Trump
         const PLAYER2 = '🧑‍🚀'; // Elon Musk
 
+        // Load or initialize scores
+        let scores = JSON.parse(localStorage.getItem('ticTacToeScores')) || {
+            '3': { player1: 0, player2: 0, draws: 0 },
+            '4': { player1: 0, player2: 0, draws: 0 },
+            '5': { player1: 0, player2: 0, draws: 0 }
+        };
+
         function generateWinningCombinations(size) {
             const combos = [];
-            const winLength = size === 3 ? 3 : 4; // 3 in a row for 3x3, 4 in a row for larger
+            const winLength = size === 3 ? 3 : 4;
             
-            // Horizontal
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col <= size - winLength; col++) {
                     const combo = [];
-                    for (let i = 0; i < winLength; i++) {
-                        combo.push(row * size + col + i);
-                    }
+                    for (let i = 0; i < winLength; i++) combo.push(row * size + col + i);
                     combos.push(combo);
                 }
             }
             
-            // Vertical
             for (let col = 0; col < size; col++) {
                 for (let row = 0; row <= size - winLength; row++) {
                     const combo = [];
-                    for (let i = 0; i < winLength; i++) {
-                        combo.push((row + i) * size + col);
-                    }
+                    for (let i = 0; i < winLength; i++) combo.push((row + i) * size + col);
                     combos.push(combo);
                 }
             }
             
-            // Diagonal (top-left to bottom-right)
             for (let row = 0; row <= size - winLength; row++) {
                 for (let col = 0; col <= size - winLength; col++) {
                     const combo = [];
-                    for (let i = 0; i < winLength; i++) {
-                        combo.push((row + i) * size + col + i);
-                    }
+                    for (let i = 0; i < winLength; i++) combo.push((row + i) * size + col + i);
                     combos.push(combo);
                 }
             }
             
-            // Diagonal (top-right to bottom-left)
             for (let row = 0; row <= size - winLength; row++) {
                 for (let col = size - 1; col >= winLength - 1; col--) {
                     const combo = [];
-                    for (let i = 0; i < winLength; i++) {
-                        combo.push((row + i) * size + col - i);
-                    }
+                    for (let i = 0; i < winLength; i++) combo.push((row + i) * size + col - i);
                     combos.push(combo);
                 }
             }
@@ -126,9 +134,10 @@
         let winningCombinations = generateWinningCombinations(boardSize);
 
         function createBoard() {
+            console.log(`Creating board with size ${boardSize}x${boardSize}`);
             board.innerHTML = '';
-            board.style.gridTemplateColumns = `repeat(${boardSize}, ${boardSize === 3 ? 100 : 90}px)`;
-            board.style.gridTemplateRows = `repeat(${boardSize}, ${boardSize === 3 ? 100 : 90}px)`;
+            board.style.gridTemplateColumns = `repeat(${boardSize}, 90px)`;
+            board.style.gridTemplateRows = `repeat(${boardSize}, 90px)`;
             gameBoard = Array(boardSize * boardSize).fill('');
             
             for (let i = 0; i < boardSize * boardSize; i++) {
@@ -137,7 +146,10 @@
                 cell.setAttribute('data-index', i);
                 cell.addEventListener('click', handleCellClick);
                 board.appendChild(cell);
+                console.log(`Added cell ${i}`);
             }
+            console.log('Board created:', board.innerHTML);
+            updateScoresDisplay();
         }
 
         function handleCellClick(e) {
@@ -152,12 +164,14 @@
             if (checkWin(playerSymbol)) {
                 status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer} wins! (${playerSymbol})`;
                 gameActive = false;
+                updateScore(currentPlayer === 1 ? 'player1' : 'player2');
                 return;
             }
             
             if (checkDraw()) {
                 status.textContent = "It's a draw!";
                 gameActive = false;
+                updateScore('draws');
                 return;
             }
 
@@ -185,12 +199,14 @@
             if (checkWin(PLAYER2)) {
                 status.textContent = `AI wins! (${PLAYER2})`;
                 gameActive = false;
+                updateScore('player2');
                 return;
             }
             
             if (checkDraw()) {
                 status.textContent = "It's a draw!";
                 gameActive = false;
+                updateScore('draws');
                 return;
             }
 
@@ -238,6 +254,18 @@
             return gameBoard.every(cell => cell !== '');
         }
 
+        function updateScore(winner) {
+            if (winner === 'player1') scores[boardSize].player1++;
+            else if (winner === 'player2') scores[boardSize].player2++;
+            else if (winner === 'draws') scores[boardSize].draws++;
+            localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+            updateScoresDisplay();
+        }
+
+        function updateScoresDisplay() {
+            scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
+        }
+
         function resetGame() {
             gameBoard = Array(boardSize * boardSize).fill('');
             gameActive = true;
@@ -255,6 +283,16 @@
             boardSize = size;
             winningCombinations = generateWinningCombinations(size);
             createBoard();
+        }
+
+        function resetScores() {
+            scores = {
+                '3': { player1: 0, player2: 0, draws: 0 },
+                '4': { player1: 0, player2: 0, draws: 0 },
+                '5': { player1: 0, player2: 0, draws: 0 }
+            };
+            localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+            updateScoresDisplay();
             resetGame();
         }
 
@@ -264,10 +302,11 @@
         size3x3Button.addEventListener('click', () => setBoardSize(3));
         size4x4Button.addEventListener('click', () => setBoardSize(4));
         size5x5Button.addEventListener('click', () => setBoardSize(5));
+        resetScoresButton.addEventListener('click', resetScores);
 
-        // Start with 3x3, two-player mode
-        setBoardSize(3);
-        setAIActive(false);
+        // Initialize the board on page load
+        createBoard();
+        console.log('Page loaded, board should be visible');
     </script>
 </body>
 </html>
