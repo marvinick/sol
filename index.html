@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Tic Tac Toe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             display: flex;
@@ -10,33 +11,56 @@
             font-family: Arial, sans-serif;
             overflow: hidden;
             position: relative;
-            min-height: 100vh; /* Ensure body takes full viewport height */
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
         }
         
         .board {
             display: grid;
-            gap: 5px;
+            gap: 3px;
             background-color: #f0f0f0;
-            padding: 10px;
+            padding: 5px;
             border: 2px solid #000;
+            width: 100%;
+            max-width: 300px;
         }
         
         .cell {
-            width: 90px;
-            height: 90px;
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%;
             border: 2px solid #333;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 50px;
+            font-size: 5vw;
             cursor: pointer;
             background-color: #fff;
             overflow: hidden;
+            position: relative;
+            text-align: center; /* Center text horizontally */
+        }
+        
+        .cell span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Center text vertically and horizontally */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .cell img {
             max-width: 80%;
             max-height: 80%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
         
         .cell:hover {
@@ -54,26 +78,41 @@
         }
         
         #status, #scores {
-            font-size: 24px;
-            margin: 20px 0;
+            font-size: 4vw;
+            margin: 10px 0;
+            text-align: center;
         }
         
         #controls {
-            margin: 20px 0;
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .control-group {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
+            gap: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
         
         button, label {
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 8px 12px;
+            font-size: 3vw;
             cursor: pointer;
-            margin: 0 5px;
             background-color: #ddd;
             border: 1px solid #333;
             border-radius: 5px;
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
         }
         
         input[type="file"] {
@@ -82,8 +121,8 @@
         
         .confetti {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background-color: red;
             pointer-events: none;
             animation: fall 3s linear forwards;
@@ -95,20 +134,22 @@
         }
         
         #winner-text {
-            position: fixed; /* Changed to fixed for better visibility */
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 48px;
+            font-size: 6vw;
             font-weight: bold;
             color: #fff;
-            text-shadow: 2px 2px 4px #000;
+            text-shadow: 1px 1px 2px #000;
             background-color: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 5px;
             display: none;
             z-index: 1000;
-            opacity: 0; /* Start hidden */
+            opacity: 0;
+            max-width: 90%;
+            text-align: center;
         }
         
         .winner-animation {
@@ -121,6 +162,16 @@
             80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
         }
+
+        @media (min-width: 600px) {
+            .board { max-width: 400px; }
+            .cell { font-size: 50px; }
+            #status, #scores { font-size: 24px; }
+            #controls { max-width: 600px; }
+            button, label { padding: 10px 20px; font-size: 16px; }
+            #winner-text { font-size: 48px; padding: 20px; }
+            .confetti { width: 10px; height: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -129,18 +180,24 @@
     <div class="board" id="board"></div>
     <div id="winner-text"></div>
     <div id="controls">
-        <button id="size3x3">3x3 (9 tiles)</button>
-        <button id="size4x4">4x4 (16 tiles)</button>
-        <button id="size5x5">5x5 (25 tiles)</button>
-        <button id="playWithAI">Play with AI</button>
-        <button id="playWithFriend">Play with Friend</button>
-        <button id="reset">Reset Game</button>
-        <button id="resetScores">Reset Scores</button>
-        <label for="player1Icon">Change Player 1 Icon</label>
-        <input type="file" id="player1Icon" accept="image/*">
-        <label for="player2Icon">Change Player 2 Icon</label>
-        <input type="file" id="player2Icon" accept="image/*">
-        <button id="resetIcons">Reset Icons to Default</button>
+        <div class="control-group" id="size-controls">
+            <button id="size3x3">3x3 (9 tiles)</button>
+            <button id="size4x4">4x4 (16 tiles)</button>
+            <button id="size5x5">5x5 (25 tiles)</button>
+        </div>
+        <div class="control-group" id="mode-controls">
+            <button id="playWithAI">Play with AI</button>
+            <button id="playWithFriend">Play with Friend</button>
+            <button id="reset">Reset Game</button>
+            <button id="resetScores">Reset Scores</button>
+        </div>
+        <div class="control-group" id="icon-controls">
+            <label for="player1Icon">Change Player 1 Icon</label>
+            <input type="file" id="player1Icon" accept="image/*">
+            <label for="player2Icon">Change Player 2 Icon</label>
+            <input type="file" id="player2Icon" accept="image/*">
+            <button id="resetIcons">Reset Icons to Default</button>
+        </div>
     </div>
 
     <script>
@@ -219,8 +276,8 @@
         function createBoard() {
             console.log(`Creating board with size ${boardSize}x${boardSize}`);
             board.innerHTML = '';
-            board.style.gridTemplateColumns = `repeat(${boardSize}, 90px)`;
-            board.style.gridTemplateRows = `repeat(${boardSize}, 90px)`;
+            board.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+            board.style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
             gameBoard = Array(boardSize * boardSize).fill('');
             
             for (let i = 0; i < boardSize * boardSize; i++) {
@@ -279,7 +336,9 @@
                 img.src = player;
                 cell.appendChild(img);
             } else {
-                cell.textContent = player;
+                const span = document.createElement('span');
+                span.textContent = player;
+                cell.appendChild(span);
             }
         }
 
@@ -369,7 +428,6 @@
             winnerText.style.display = 'block';
             winnerText.classList.add('winner-animation');
             
-            // Remove the animation class and hide after 3 seconds
             setTimeout(() => {
                 console.log('Hiding winner animation');
                 winnerText.classList.remove('winner-animation');
@@ -380,8 +438,7 @@
         function startConfetti() {
             console.log('Starting confetti');
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-            const confettiCount = 100;
-            
+            const confettiCount = 50;
             for (let i = 0; i < confettiCount; i++) {
                 const confetti = document.createElement('div');
                 confetti.className = 'confetti';
