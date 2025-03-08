@@ -51,8 +51,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10vw; /* Increased for larger text */
-            font-weight: bold; /* Make it more prominent */
+            font-size: 10vw;
+            font-weight: bold;
         }
         
         .cell img {
@@ -103,7 +103,7 @@
             background-color: #f9f9f9;
         }
         
-        button, label {
+        button, label, select {
             padding: 8px 12px;
             font-size: 3vw;
             cursor: pointer;
@@ -169,14 +169,14 @@
                 max-width: 400px; 
                 width: 400px;
             }
-            .cell span { font-size: 60px; } /* Larger fixed size for desktop */
-            .cell { font-size: 50px; } /* Fallback for consistency */
+            .cell span { font-size: 60px; }
+            .cell { font-size: 50px; }
             #status, #scores { font-size: 24px; }
             #controls { 
                 max-width: 600px; 
                 width: 600px;
             }
-            button, label { padding: 10px 20px; font-size: 16px; }
+            button, label, select { padding: 10px 20px; font-size: 16px; }
             #winner-text { font-size: 48px; padding: 20px; }
             .confetti { width: 10px; height: 10px; }
         }
@@ -200,11 +200,25 @@
             <button id="resetScores">Reset Scores</button>
         </div>
         <div class="control-group" id="icon-controls">
-            <label for="player1Icon">Change Player 1 Icon</label>
+            <select id="player1Preset">
+                <option value="X">X (Default)</option>
+                <option value="⭐">⭐ Star</option>
+                <option value="🐱">🐱 Cat</option>
+                <option value="🚀">🚀 Rocket</option>
+                <option value="🌟">🌟 Sparkle</option>
+            </select>
+            <label for="player1Icon">Upload P1</label>
             <input type="file" id="player1Icon" accept="image/*">
-            <label for="player2Icon">Change Player 2 Icon</label>
+            <select id="player2Preset">
+                <option value="O">O (Default)</option>
+                <option value="💥">💥 Explosion</option>
+                <option value="🐶">🐶 Dog</option>
+                <option value="🪐">🪐 Planet</option>
+                <option value="⚡">⚡ Lightning</option>
+            </select>
+            <label for="player2Icon">Upload P2</label>
             <input type="file" id="player2Icon" accept="image/*">
-            <button id="resetIcons">Reset Icons to Default</button>
+            <button id="resetIcons">Reset to Default</button>
         </div>
     </div>
 
@@ -223,6 +237,8 @@
         const player1IconInput = document.getElementById('player1Icon');
         const player2IconInput = document.getElementById('player2Icon');
         const resetIconsButton = document.getElementById('resetIcons');
+        const player1Preset = document.getElementById('player1Preset');
+        const player2Preset = document.getElementById('player2Preset');
         
         let gameBoard = [];
         let gameActive = true;
@@ -521,9 +537,25 @@
             PLAYER2 = DEFAULT_PLAYER2;
             localStorage.removeItem('player1Icon');
             localStorage.removeItem('player2Icon');
+            player1Preset.value = DEFAULT_PLAYER1;
+            player2Preset.value = DEFAULT_PLAYER2;
             resetGame();
         }
 
+        // Preset icon selection
+        player1Preset.addEventListener('change', (e) => {
+            PLAYER1 = e.target.value;
+            localStorage.setItem('player1Icon', PLAYER1);
+            resetGame();
+        });
+
+        player2Preset.addEventListener('change', (e) => {
+            PLAYER2 = e.target.value;
+            localStorage.setItem('player2Icon', PLAYER2);
+            resetGame();
+        });
+
+        // File upload handlers
         player1IconInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -531,6 +563,7 @@
                 reader.onload = (event) => {
                     PLAYER1 = event.target.result;
                     localStorage.setItem('player1Icon', PLAYER1);
+                    player1Preset.value = ''; // Clear preset selection
                     resetGame();
                 };
                 reader.readAsDataURL(file);
@@ -544,12 +577,14 @@
                 reader.onload = (event) => {
                     PLAYER2 = event.target.result;
                     localStorage.setItem('player2Icon', PLAYER2);
+                    player2Preset.value = ''; // Clear preset selection
                     resetGame();
                 };
                 reader.readAsDataURL(file);
             }
         });
 
+        // Button event listeners
         resetButton.addEventListener('click', resetGame);
         playWithAIButton.addEventListener('click', () => setAIActive(true));
         playWithFriendButton.addEventListener('click', () => setAIActive(false));
@@ -559,6 +594,7 @@
         resetScoresButton.addEventListener('click', resetScores);
         resetIconsButton.addEventListener('click', resetIcons);
 
+        // Initialize board
         createBoard();
         console.log('Page loaded, board should be visible');
     </script>
