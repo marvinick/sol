@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tic Tac Toe</title>
+    <title>Tic Tac Toe Fighter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -196,6 +196,7 @@
         <div class="control-group" id="mode-controls">
             <button id="playWithAI">Play with AI</button>
             <button id="playWithFriend">Play with Friend</button>
+            <button id="startCampaign">Start Campaign</button>
             <button id="reset">Reset Game</button>
             <button id="resetScores">Reset Scores</button>
         </div>
@@ -230,6 +231,7 @@
         const resetButton = document.getElementById('reset');
         const playWithAIButton = document.getElementById('playWithAI');
         const playWithFriendButton = document.getElementById('playWithFriend');
+        const startCampaignButton = document.getElementById('startCampaign');
         const size3x3Button = document.getElementById('size3x3');
         const size4x4Button = document.getElementById('size4x4');
         const size5x5Button = document.getElementById('size5x5');
@@ -243,7 +245,13 @@
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
-        let isAIActive = false;
+        let gameMode = "friend"; // Default mode
+        let currentOpponent = 0;
+        const opponents = [
+            { name: "Grunt", strategy: "random" },
+            { name: "Tactician", strategy: "center" },
+            { name: "Master", strategy: "smart" }
+        ];
         let boardSize = 3;
         const DEFAULT_PLAYER1 = 'X';
         const DEFAULT_PLAYER2 = 'O';
@@ -326,27 +334,47 @@
             
             const winningCombo = checkWin(playerSymbol);
             if (winningCombo) {
-                const winnerMessage = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer} is the winner!`;
-                status.textContent = winnerMessage;
-                gameActive = false;
-                highlightWinningCells(winningCombo);
-                showWinnerAnimation(winnerMessage);
-                startConfetti();
-                updateScore(currentPlayer === 1 ? 'player1' : 'player2');
+                if (gameMode === "campaign") {
+                    status.textContent = `You defeated ${opponents[currentOpponent].name}!`;
+                    showWinnerAnimation(`Victory over ${opponents[currentOpponent].name}!`);
+                    gameActive = false;
+                    highlightWinningCells(winningCombo);
+                    startConfetti();
+                    currentOpponent++;
+                    setTimeout(nextOpponent, 3000);
+                } else {
+                    const winnerMessage = `Player ${currentPlayer} wins!`;
+                    status.textContent = winnerMessage;
+                    gameActive = false;
+                    highlightWinningCells(winningCombo);
+                    showWinnerAnimation(winnerMessage);
+                    startConfetti();
+                    updateScore(currentPlayer === 1 ? 'player1' : 'player2');
+                }
                 return;
             }
             
             if (checkDraw()) {
-                status.textContent = "It's a draw!";
-                gameActive = false;
-                updateScore('draws');
+                if (gameMode === "campaign") {
+                    status.textContent = `Draw against ${opponents[currentOpponent].name}! Try again.`;
+                    showWinnerAnimation("Draw! Fight again!");
+                    gameActive = false;
+                    startConfetti();
+                    setTimeout(resetGame, 3000);
+                } else {
+                    status.textContent = "It's a draw!";
+                    gameActive = false;
+                    showWinnerAnimation("It's a draw!");
+                    startConfetti();
+                    updateScore('draws');
+                }
                 return;
             }
 
             currentPlayer = currentPlayer === 1 ? 2 : 1;
             updateStatus();
             
-            if (isAIActive && currentPlayer === 2) {
+            if ((gameMode === "singleAI" || gameMode === "campaign") && currentPlayer === 2) {
                 setTimeout(aiMove, 500);
             }
         }
@@ -369,27 +397,57 @@
         function aiMove() {
             if (!gameActive) return;
 
-            let move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || 
-                     getCenterMove() || getRandomMove();
+            let move;
+            if (gameMode === "campaign") {
+                const strategy = opponents[currentOpponent].strategy;
+                if (strategy === "random") {
+                    move = getRandomMove();
+                } else if (strategy === "center") {
+                    move = getCenterMove() || getRandomMove();
+                } else if (strategy === "smart") {
+                    move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCenterMove() || getRandomMove();
+                }
+            } else {
+                // Default single AI behavior
+                move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCenterMove() || getRandomMove();
+            }
             
             makeMove(move, PLAYER2);
 
             const winningCombo = checkWin(PLAYER2);
             if (winningCombo) {
-                const winnerMessage = `AI is the winner!`;
-                status.textContent = winnerMessage;
-                gameActive = false;
-                highlightWinningCells(winningCombo);
-                showWinnerAnimation(winnerMessage);
-                startConfetti();
-                updateScore('player2');
+                if (gameMode === "campaign") {
+                    status.textContent = `${opponents[currentOpponent].name} defeated you!`;
+                    showWinnerAnimation(`${opponents[currentOpponent].name} wins!`);
+                    gameActive = false;
+                    highlightWinningCells(winningCombo);
+                    startConfetti();
+                    setTimeout(resetGame, 3000);
+                } else {
+                    status.textContent = "AI wins!";
+                    gameActive = false;
+                    highlightWinningCells(winningCombo);
+                    showWinnerAnimation("AI wins!");
+                    startConfetti();
+                    updateScore('player2');
+                }
                 return;
             }
             
             if (checkDraw()) {
-                status.textContent = "It's a draw!";
-                gameActive = false;
-                updateScore('draws');
+                if (gameMode === "campaign") {
+                    status.textContent = `Draw against ${opponents[currentOpponent].name}! Try again.`;
+                    showWinnerAnimation("Draw! Fight again!");
+                    gameActive = false;
+                    startConfetti();
+                    setTimeout(resetGame, 3000);
+                } else {
+                    status.textContent = "It's a draw!";
+                    gameActive = false;
+                    showWinnerAnimation("It's a draw!");
+                    startConfetti();
+                    updateScore('draws');
+                }
                 return;
             }
 
@@ -488,12 +546,28 @@
         }
 
         function updateScoresDisplay() {
-            scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
+            if (gameMode === "campaign") {
+                scoresDisplay.textContent = `Progress: Opponent ${currentOpponent + 1}/${opponents.length}`;
+            } else {
+                scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
+            }
         }
 
         function updateStatus() {
-            const playerIcon = currentPlayer === 1 ? (PLAYER1.startsWith('data:image') ? 'Player 1' : PLAYER1) : (PLAYER2.startsWith('data:image') ? 'Player 2/AI' : PLAYER2);
-            status.textContent = `${isAIActive && currentPlayer === 2 ? 'AI' : 'Player ' + currentPlayer}'s turn (${playerIcon})`;
+            if (!gameActive) {
+                if (gameMode === "campaign" && currentOpponent >= opponents.length) {
+                    status.textContent = "You are the Tic Tac Toe Champion!";
+                } else {
+                    status.textContent = "Game over! Choose a mode to play.";
+                }
+            } else {
+                const playerIcon = currentPlayer === 1 ? (PLAYER1.startsWith('data:image') ? 'Player 1' : PLAYER1) : (PLAYER2.startsWith('data:image') ? 'Player 2/AI' : PLAYER2);
+                if (gameMode === "campaign" && currentPlayer === 2) {
+                    status.textContent = `${opponents[currentOpponent].name}'s turn (${playerIcon})`;
+                } else {
+                    status.textContent = `Player ${currentPlayer}'s turn (${playerIcon})`;
+                }
+            }
         }
 
         function resetGame() {
@@ -508,28 +582,66 @@
             document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
             winnerText.classList.remove('winner-animation');
             winnerText.style.display = 'none';
+            if (gameMode === "campaign" && currentOpponent >= opponents.length) {
+                gameActive = false;
+            }
         }
 
-        function setAIActive(active) {
-            isAIActive = active;
+        function nextOpponent() {
+            if (currentOpponent >= opponents.length) {
+                status.textContent = "You are the Tic Tac Toe Champion!";
+                gameActive = false;
+                updateScoresDisplay();
+            } else {
+                resetGame();
+                status.textContent = `Prepare to face ${opponents[currentOpponent].name}!`;
+                setTimeout(() => {
+                    gameActive = true;
+                    updateStatus();
+                }, 1000);
+            }
+        }
+
+        function startCampaign() {
+            gameMode = "campaign";
+            currentOpponent = 0;
+            gameActive = true;
+            resetGame();
+            status.textContent = `Prepare to face ${opponents[currentOpponent].name}!`;
+            setTimeout(() => updateStatus(), 1000);
+        }
+
+        function playWithAI() {
+            gameMode = "singleAI";
+            resetGame();
+        }
+
+        function playWithFriend() {
+            gameMode = "friend";
             resetGame();
         }
 
         function setBoardSize(size) {
             boardSize = size;
             winningCombinations = generateWinningCombinations(size);
-            createBoard();
+            resetGame();
         }
 
         function resetScores() {
-            scores = {
-                '3': { player1: 0, player2: 0, draws: 0 },
-                '4': { player1: 0, player2: 0, draws: 0 },
-                '5': { player1: 0, player2: 0, draws: 0 }
-            };
-            localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
-            updateScoresDisplay();
-            resetGame();
+            if (gameMode === "campaign") {
+                currentOpponent = 0;
+                resetGame();
+                status.textContent = "Campaign reset! Start again.";
+            } else {
+                scores = {
+                    '3': { player1: 0, player2: 0, draws: 0 },
+                    '4': { player1: 0, player2: 0, draws: 0 },
+                    '5': { player1: 0, player2: 0, draws: 0 }
+                };
+                localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+                updateScoresDisplay();
+                resetGame();
+            }
         }
 
         function resetIcons() {
@@ -542,7 +654,6 @@
             resetGame();
         }
 
-        // Preset icon selection
         player1Preset.addEventListener('change', (e) => {
             PLAYER1 = e.target.value;
             localStorage.setItem('player1Icon', PLAYER1);
@@ -555,7 +666,6 @@
             resetGame();
         });
 
-        // File upload handlers
         player1IconInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -563,7 +673,7 @@
                 reader.onload = (event) => {
                     PLAYER1 = event.target.result;
                     localStorage.setItem('player1Icon', PLAYER1);
-                    player1Preset.value = ''; // Clear preset selection
+                    player1Preset.value = '';
                     resetGame();
                 };
                 reader.readAsDataURL(file);
@@ -577,24 +687,23 @@
                 reader.onload = (event) => {
                     PLAYER2 = event.target.result;
                     localStorage.setItem('player2Icon', PLAYER2);
-                    player2Preset.value = ''; // Clear preset selection
+                    player2Preset.value = '';
                     resetGame();
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        // Button event listeners
         resetButton.addEventListener('click', resetGame);
-        playWithAIButton.addEventListener('click', () => setAIActive(true));
-        playWithFriendButton.addEventListener('click', () => setAIActive(false));
+        playWithAIButton.addEventListener('click', playWithAI);
+        playWithFriendButton.addEventListener('click', playWithFriend);
+        startCampaignButton.addEventListener('click', startCampaign);
         size3x3Button.addEventListener('click', () => setBoardSize(3));
         size4x4Button.addEventListener('click', () => setBoardSize(4));
         size5x5Button.addEventListener('click', () => setBoardSize(5));
         resetScoresButton.addEventListener('click', resetScores);
         resetIconsButton.addEventListener('click', resetIcons);
 
-        // Initialize board
         createBoard();
         console.log('Page loaded, board should be visible');
     </script>
