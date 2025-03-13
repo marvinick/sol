@@ -19,11 +19,12 @@
         .board {
             display: grid;
             gap: 3px;
-            background-color: #f0f0f0;
+            background-color: #f0f0f0; /* Default background */
             padding: 5px;
             border: 2px solid #000;
             width: calc(100% - 10px);
             margin: 0;
+            transition: background-color 0.5s ease; /* Smooth transition for color changes */
         }
         
         .cell {
@@ -260,20 +261,21 @@
         let currentOpponent = 0;
         let campaignOpponents = [];
         const allOpponents = [
-            { name: "Rookie", strategy: "random", icon: "🤖" },           // Robot
-            { name: "Grunt", strategy: "center", icon: "👾" },            // Alien
-            { name: "Soldier", strategy: "randomBlock", icon: "🗡️" },     // Sword
-            { name: "Tactician", strategy: "smartCenter", icon: "🎯" },    // Target
-            { name: "Strategist", strategy: "smart", icon: "♟️" },        // Pawn
-            { name: "Knight", strategy: "smartCorners", icon: "♞" },      // Knight chess piece
-            { name: "Commander", strategy: "smartBlock", icon: "🛡️" },    // Shield
-            { name: "General", strategy: "smartWin", icon: "⭐" },         // Star (rank)
-            { name: "Master", strategy: "smartFull", icon: "👑" },         // Crown
-            { name: "Legend", strategy: "perfect", icon: "🏆" }            // Trophy
+            { name: "Rookie", strategy: "random", icon: "🤖", backgroundColor: "#e6f3ff" },      // Light blue
+            { name: "Grunt", strategy: "center", icon: "👾", backgroundColor: "#e6ffe6" },       // Light green
+            { name: "Soldier", strategy: "randomBlock", icon: "🗡️", backgroundColor: "#fff0e6" }, // Light orange
+            { name: "Tactician", strategy: "smartCenter", icon: "🎯", backgroundColor: "#f2e6ff" }, // Light purple
+            { name: "Strategist", strategy: "smart", icon: "♟️", backgroundColor: "#ffe6e6" },   // Light red
+            { name: "Knight", strategy: "smartCorners", icon: "♞", backgroundColor: "#e6f2ff" }, // Light cyan
+            { name: "Commander", strategy: "smartBlock", icon: "🛡️", backgroundColor: "#f0e6ff" }, // Light lavender
+            { name: "General", strategy: "smartWin", icon: "⭐", backgroundColor: "#fff3e6" },    // Light peach
+            { name: "Master", strategy: "smartFull", icon: "👑", backgroundColor: "#e6fff0" },    // Light mint
+            { name: "Legend", strategy: "perfect", icon: "🏆", backgroundColor: "#fffbe6" }       // Light yellow
         ];
         let boardSize = 3; // Default size
         const DEFAULT_PLAYER1 = 'X';
         const DEFAULT_PLAYER2 = 'O';
+        const DEFAULT_BACKGROUND = '#f0f0f0'; // Default board background
         let PLAYER1 = localStorage.getItem('player1Icon') || DEFAULT_PLAYER1;
         let PLAYER2 = localStorage.getItem('player2Icon') || DEFAULT_PLAYER2;
         let userPLAYER2 = PLAYER2; // Store user's original P2 icon choice
@@ -339,8 +341,17 @@
                 cell.addEventListener('click', handleCellClick);
                 board.appendChild(cell);
             }
+            updateBoardBackground();
             updateScoresDisplay();
             updateStatus();
+        }
+
+        function updateBoardBackground() {
+            if (gameMode === "campaign" && currentOpponent < campaignOpponents.length) {
+                board.style.backgroundColor = campaignOpponents[currentOpponent].backgroundColor;
+            } else {
+                board.style.backgroundColor = DEFAULT_BACKGROUND;
+            }
         }
 
         function handleCellClick(e) {
@@ -620,10 +631,11 @@
             gameActive = true;
             currentPlayer = 1;
             if (gameMode === "campaign" && currentOpponent < campaignOpponents.length) {
-                PLAYER2 = campaignOpponents[currentOpponent].icon; // Set AI icon for current opponent
+                PLAYER2 = campaignOpponents[currentOpponent].icon; // Set AI icon
             } else if (gameMode !== "campaign") {
-                PLAYER2 = userPLAYER2; // Revert to user's P2 icon outside campaign
+                PLAYER2 = userPLAYER2; // Revert to user's P2 icon
             }
+            updateBoardBackground();
             updateStatus();
             Array.from(board.children).forEach(cell => {
                 cell.innerHTML = '';
@@ -641,11 +653,13 @@
             if (currentOpponent >= campaignOpponents.length) {
                 status.textContent = "You are the Tic Tac Toe Champion!";
                 gameActive = false;
-                PLAYER2 = userPLAYER2; // Revert to user's P2 icon after campaign ends
+                PLAYER2 = userPLAYER2; // Revert to user's P2 icon
+                board.style.backgroundColor = DEFAULT_BACKGROUND;
                 updateScoresDisplay();
             } else {
                 resetGame();
                 PLAYER2 = campaignOpponents[currentOpponent].icon; // Update AI icon
+                updateBoardBackground();
                 status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
                 setTimeout(() => {
                     gameActive = true;
