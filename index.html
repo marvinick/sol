@@ -115,6 +115,11 @@
             text-align: center;
         }
         
+        button.active {
+            background-color: #bbb;
+            font-weight: bold;
+        }
+        
         input[type="file"] {
             display: none;
         }
@@ -189,14 +194,20 @@
     <div id="winner-text"></div>
     <div id="controls">
         <div class="control-group" id="size-controls">
-            <button id="size3x3">3x3 (9 tiles)</button>
+            <button id="size3x3" class="active">3x3 (9 tiles)</button>
             <button id="size4x4">4x4 (16 tiles)</button>
             <button id="size5x5">5x5 (25 tiles)</button>
         </div>
         <div class="control-group" id="mode-controls">
             <button id="playWithAI">Play with AI</button>
             <button id="playWithFriend">Play with Friend</button>
-            <button id="startCampaign">Start Campaign</button>
+            <select id="startCampaign">
+                <option value="0" selected disabled>Start Campaign...</option>
+                <option value="3">Campaign (3 Opponents)</option>
+                <option value="5">Campaign (5 Opponents)</option>
+                <option value="8">Campaign (8 Opponents)</option>
+                <option value="10">Campaign (10 Opponents)</option>
+            </select>
             <button id="reset">Reset Game</button>
             <button id="resetScores">Reset Scores</button>
         </div>
@@ -231,7 +242,7 @@
         const resetButton = document.getElementById('reset');
         const playWithAIButton = document.getElementById('playWithAI');
         const playWithFriendButton = document.getElementById('playWithFriend');
-        const startCampaignButton = document.getElementById('startCampaign');
+        const startCampaignSelect = document.getElementById('startCampaign');
         const size3x3Button = document.getElementById('size3x3');
         const size4x4Button = document.getElementById('size4x4');
         const size5x5Button = document.getElementById('size5x5');
@@ -247,12 +258,20 @@
         let currentPlayer = 1;
         let gameMode = "friend"; // Default mode
         let currentOpponent = 0;
-        const opponents = [
-            { name: "Grunt", strategy: "random" },
-            { name: "Tactician", strategy: "center" },
-            { name: "Master", strategy: "smart" }
+        let campaignOpponents = [];
+        const allOpponents = [
+            { name: "Rookie", strategy: "random" },           // Purely random
+            { name: "Grunt", strategy: "center" },            // Center if free
+            { name: "Soldier", strategy: "randomBlock" },     // Blocks randomly
+            { name: "Tactician", strategy: "smartCenter" },   // Smart with center priority
+            { name: "Strategist", strategy: "smart" },        // Basic smart AI
+            { name: "Knight", strategy: "smartCorners" },     // Smart with corner preference
+            { name: "Commander", strategy: "smartBlock" },    // Smart with aggressive blocking
+            { name: "General", strategy: "smartWin" },        // Smart with win focus
+            { name: "Master", strategy: "smartFull" },        // Smart with full strategy
+            { name: "Legend", strategy: "perfect" }           // Near-perfect play
         ];
-        let boardSize = 3;
+        let boardSize = 3; // Default size
         const DEFAULT_PLAYER1 = 'X';
         const DEFAULT_PLAYER2 = 'O';
         let PLAYER1 = localStorage.getItem('player1Icon') || DEFAULT_PLAYER1;
@@ -335,8 +354,8 @@
             const winningCombo = checkWin(playerSymbol);
             if (winningCombo) {
                 if (gameMode === "campaign") {
-                    status.textContent = `You defeated ${opponents[currentOpponent].name}!`;
-                    showWinnerAnimation(`Victory over ${opponents[currentOpponent].name}!`);
+                    status.textContent = `You defeated ${campaignOpponents[currentOpponent].name}!`;
+                    showWinnerAnimation(`Victory over ${campaignOpponents[currentOpponent].name}!`);
                     gameActive = false;
                     highlightWinningCells(winningCombo);
                     startConfetti();
@@ -356,7 +375,7 @@
             
             if (checkDraw()) {
                 if (gameMode === "campaign") {
-                    status.textContent = `Draw against ${opponents[currentOpponent].name}! Try again.`;
+                    status.textContent = `Draw against ${campaignOpponents[currentOpponent].name}! Try again.`;
                     showWinnerAnimation("Draw! Fight again!");
                     gameActive = false;
                     startConfetti();
@@ -399,16 +418,29 @@
 
             let move;
             if (gameMode === "campaign") {
-                const strategy = opponents[currentOpponent].strategy;
+                const strategy = campaignOpponents[currentOpponent].strategy;
                 if (strategy === "random") {
                     move = getRandomMove();
                 } else if (strategy === "center") {
                     move = getCenterMove() || getRandomMove();
-                } else if (strategy === "smart") {
+                } else if (strategy === "randomBlock") {
+                    move = findWinningMove(PLAYER1) || getRandomMove();
+                } else if (strategy === "smartCenter") {
                     move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCenterMove() || getRandomMove();
+                } else if (strategy === "smart") {
+                    move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getRandomMove();
+                } else if (strategy === "smartCorners") {
+                    move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCornerMove() || getRandomMove();
+                } else if (strategy === "smartBlock") {
+                    move = findWinningMove(PLAYER1) || findWinningMove(PLAYER2) || getCenterMove() || getRandomMove();
+                } else if (strategy === "smartWin") {
+                    move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCenterMove() || getRandomMove();
+                } else if (strategy === "smartFull") {
+                    move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCenterMove() || getCornerMove() || getRandomMove();
+                } else if (strategy === "perfect") {
+                    move = findPerfectMove(PLAYER2) || findPerfectMove(PLAYER1) || getCenterMove() || getCornerMove() || getRandomMove();
                 }
             } else {
-                // Default single AI behavior
                 move = findWinningMove(PLAYER2) || findWinningMove(PLAYER1) || getCenterMove() || getRandomMove();
             }
             
@@ -417,8 +449,8 @@
             const winningCombo = checkWin(PLAYER2);
             if (winningCombo) {
                 if (gameMode === "campaign") {
-                    status.textContent = `${opponents[currentOpponent].name} defeated you!`;
-                    showWinnerAnimation(`${opponents[currentOpponent].name} wins!`);
+                    status.textContent = `${campaignOpponents[currentOpponent].name} defeated you!`;
+                    showWinnerAnimation(`${campaignOpponents[currentOpponent].name} wins!`);
                     gameActive = false;
                     highlightWinningCells(winningCombo);
                     startConfetti();
@@ -436,7 +468,7 @@
             
             if (checkDraw()) {
                 if (gameMode === "campaign") {
-                    status.textContent = `Draw against ${opponents[currentOpponent].name}! Try again.`;
+                    status.textContent = `Draw against ${campaignOpponents[currentOpponent].name}! Try again.`;
                     showWinnerAnimation("Draw! Fight again!");
                     gameActive = false;
                     startConfetti();
@@ -471,9 +503,21 @@
             return null;
         }
 
+        function findPerfectMove(player) {
+            return findWinningMove(player) || findWinningMove(player === PLAYER1 ? PLAYER2 : PLAYER1);
+        }
+
         function getCenterMove() {
             const center = Math.floor((boardSize * boardSize - 1) / 2);
             if (gameBoard[center] === '') return center;
+            return null;
+        }
+
+        function getCornerMove() {
+            const corners = [0, boardSize - 1, (boardSize * (boardSize - 1)), (boardSize * boardSize) - 1];
+            for (let corner of corners) {
+                if (gameBoard[corner] === '') return corner;
+            }
             return null;
         }
 
@@ -547,7 +591,7 @@
 
         function updateScoresDisplay() {
             if (gameMode === "campaign") {
-                scoresDisplay.textContent = `Progress: Opponent ${currentOpponent + 1}/${opponents.length}`;
+                scoresDisplay.textContent = `Progress: Opponent ${currentOpponent + 1}/${campaignOpponents.length} (${boardSize}x${boardSize})`;
             } else {
                 scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
             }
@@ -555,7 +599,7 @@
 
         function updateStatus() {
             if (!gameActive) {
-                if (gameMode === "campaign" && currentOpponent >= opponents.length) {
+                if (gameMode === "campaign" && currentOpponent >= campaignOpponents.length) {
                     status.textContent = "You are the Tic Tac Toe Champion!";
                 } else {
                     status.textContent = "Game over! Choose a mode to play.";
@@ -563,7 +607,7 @@
             } else {
                 const playerIcon = currentPlayer === 1 ? (PLAYER1.startsWith('data:image') ? 'Player 1' : PLAYER1) : (PLAYER2.startsWith('data:image') ? 'Player 2/AI' : PLAYER2);
                 if (gameMode === "campaign" && currentPlayer === 2) {
-                    status.textContent = `${opponents[currentOpponent].name}'s turn (${playerIcon})`;
+                    status.textContent = `${campaignOpponents[currentOpponent].name}'s turn (${playerIcon})`;
                 } else {
                     status.textContent = `Player ${currentPlayer}'s turn (${playerIcon})`;
                 }
@@ -582,19 +626,19 @@
             document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
             winnerText.classList.remove('winner-animation');
             winnerText.style.display = 'none';
-            if (gameMode === "campaign" && currentOpponent >= opponents.length) {
+            if (gameMode === "campaign" && currentOpponent >= campaignOpponents.length) {
                 gameActive = false;
             }
         }
 
         function nextOpponent() {
-            if (currentOpponent >= opponents.length) {
+            if (currentOpponent >= campaignOpponents.length) {
                 status.textContent = "You are the Tic Tac Toe Champion!";
                 gameActive = false;
                 updateScoresDisplay();
             } else {
                 resetGame();
-                status.textContent = `Prepare to face ${opponents[currentOpponent].name}!`;
+                status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
                 setTimeout(() => {
                     gameActive = true;
                     updateStatus();
@@ -602,29 +646,40 @@
             }
         }
 
-        function startCampaign() {
+        function startCampaign(numOpponents) {
             gameMode = "campaign";
             currentOpponent = 0;
+            campaignOpponents = allOpponents.slice(0, numOpponents);
+            winningCombinations = generateWinningCombinations(boardSize); // Ensure correct win conditions
+            createBoard(); // Recreate board with current size
             gameActive = true;
-            resetGame();
-            status.textContent = `Prepare to face ${opponents[currentOpponent].name}!`;
+            status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
             setTimeout(() => updateStatus(), 1000);
         }
 
         function playWithAI() {
             gameMode = "singleAI";
-            resetGame();
+            winningCombinations = generateWinningCombinations(boardSize);
+            createBoard();
         }
 
         function playWithFriend() {
             gameMode = "friend";
-            resetGame();
+            winningCombinations = generateWinningCombinations(boardSize);
+            createBoard();
         }
 
         function setBoardSize(size) {
             boardSize = size;
             winningCombinations = generateWinningCombinations(size);
-            resetGame();
+            createBoard();
+            // Update button states
+            size3x3Button.classList.remove('active');
+            size4x4Button.classList.remove('active');
+            size5x5Button.classList.remove('active');
+            if (size === 3) size3x3Button.classList.add('active');
+            else if (size === 4) size4x4Button.classList.add('active');
+            else if (size === 5) size5x5Button.classList.add('active');
         }
 
         function resetScores() {
@@ -653,6 +708,14 @@
             player2Preset.value = DEFAULT_PLAYER2;
             resetGame();
         }
+
+        startCampaignSelect.addEventListener('change', (e) => {
+            const numOpponents = parseInt(e.target.value);
+            if (numOpponents > 0) {
+                startCampaign(numOpponents);
+                e.target.selectedIndex = 0; // Reset to "Start Campaign..."
+            }
+        });
 
         player1Preset.addEventListener('change', (e) => {
             PLAYER1 = e.target.value;
@@ -697,14 +760,14 @@
         resetButton.addEventListener('click', resetGame);
         playWithAIButton.addEventListener('click', playWithAI);
         playWithFriendButton.addEventListener('click', playWithFriend);
-        startCampaignButton.addEventListener('click', startCampaign);
         size3x3Button.addEventListener('click', () => setBoardSize(3));
         size4x4Button.addEventListener('click', () => setBoardSize(4));
         size5x5Button.addEventListener('click', () => setBoardSize(5));
         resetScoresButton.addEventListener('click', resetScores);
         resetIconsButton.addEventListener('click', resetIcons);
 
-        createBoard();
+        // Initialize with default size
+        setBoardSize(3);
         console.log('Page loaded, board should be visible');
     </script>
 </body>
