@@ -260,22 +260,23 @@
         let currentOpponent = 0;
         let campaignOpponents = [];
         const allOpponents = [
-            { name: "Rookie", strategy: "random" },           // Purely random
-            { name: "Grunt", strategy: "center" },            // Center if free
-            { name: "Soldier", strategy: "randomBlock" },     // Blocks randomly
-            { name: "Tactician", strategy: "smartCenter" },   // Smart with center priority
-            { name: "Strategist", strategy: "smart" },        // Basic smart AI
-            { name: "Knight", strategy: "smartCorners" },     // Smart with corner preference
-            { name: "Commander", strategy: "smartBlock" },    // Smart with aggressive blocking
-            { name: "General", strategy: "smartWin" },        // Smart with win focus
-            { name: "Master", strategy: "smartFull" },        // Smart with full strategy
-            { name: "Legend", strategy: "perfect" }           // Near-perfect play
+            { name: "Rookie", strategy: "random", icon: "🤖" },           // Robot
+            { name: "Grunt", strategy: "center", icon: "👾" },            // Alien
+            { name: "Soldier", strategy: "randomBlock", icon: "🗡️" },     // Sword
+            { name: "Tactician", strategy: "smartCenter", icon: "🎯" },    // Target
+            { name: "Strategist", strategy: "smart", icon: "♟️" },        // Pawn
+            { name: "Knight", strategy: "smartCorners", icon: "♞" },      // Knight chess piece
+            { name: "Commander", strategy: "smartBlock", icon: "🛡️" },    // Shield
+            { name: "General", strategy: "smartWin", icon: "⭐" },         // Star (rank)
+            { name: "Master", strategy: "smartFull", icon: "👑" },         // Crown
+            { name: "Legend", strategy: "perfect", icon: "🏆" }            // Trophy
         ];
         let boardSize = 3; // Default size
         const DEFAULT_PLAYER1 = 'X';
         const DEFAULT_PLAYER2 = 'O';
         let PLAYER1 = localStorage.getItem('player1Icon') || DEFAULT_PLAYER1;
         let PLAYER2 = localStorage.getItem('player2Icon') || DEFAULT_PLAYER2;
+        let userPLAYER2 = PLAYER2; // Store user's original P2 icon choice
 
         let scores = JSON.parse(localStorage.getItem('ticTacToeScores')) || {
             '3': { player1: 0, player2: 0, draws: 0 },
@@ -618,6 +619,11 @@
             gameBoard = Array(boardSize * boardSize).fill('');
             gameActive = true;
             currentPlayer = 1;
+            if (gameMode === "campaign" && currentOpponent < campaignOpponents.length) {
+                PLAYER2 = campaignOpponents[currentOpponent].icon; // Set AI icon for current opponent
+            } else if (gameMode !== "campaign") {
+                PLAYER2 = userPLAYER2; // Revert to user's P2 icon outside campaign
+            }
             updateStatus();
             Array.from(board.children).forEach(cell => {
                 cell.innerHTML = '';
@@ -635,9 +641,11 @@
             if (currentOpponent >= campaignOpponents.length) {
                 status.textContent = "You are the Tic Tac Toe Champion!";
                 gameActive = false;
+                PLAYER2 = userPLAYER2; // Revert to user's P2 icon after campaign ends
                 updateScoresDisplay();
             } else {
                 resetGame();
+                PLAYER2 = campaignOpponents[currentOpponent].icon; // Update AI icon
                 status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
                 setTimeout(() => {
                     gameActive = true;
@@ -650,8 +658,9 @@
             gameMode = "campaign";
             currentOpponent = 0;
             campaignOpponents = allOpponents.slice(0, numOpponents);
-            winningCombinations = generateWinningCombinations(boardSize); // Ensure correct win conditions
-            createBoard(); // Recreate board with current size
+            PLAYER2 = campaignOpponents[currentOpponent].icon; // Set first opponent's icon
+            winningCombinations = generateWinningCombinations(boardSize);
+            createBoard();
             gameActive = true;
             status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
             setTimeout(() => updateStatus(), 1000);
@@ -659,12 +668,14 @@
 
         function playWithAI() {
             gameMode = "singleAI";
+            PLAYER2 = userPLAYER2; // Use user's P2 icon
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
         }
 
         function playWithFriend() {
             gameMode = "friend";
+            PLAYER2 = userPLAYER2; // Use user's P2 icon
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
         }
@@ -673,7 +684,6 @@
             boardSize = size;
             winningCombinations = generateWinningCombinations(size);
             createBoard();
-            // Update button states
             size3x3Button.classList.remove('active');
             size4x4Button.classList.remove('active');
             size5x5Button.classList.remove('active');
@@ -701,7 +711,8 @@
 
         function resetIcons() {
             PLAYER1 = DEFAULT_PLAYER1;
-            PLAYER2 = DEFAULT_PLAYER2;
+            userPLAYER2 = DEFAULT_PLAYER2;
+            PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
             localStorage.removeItem('player1Icon');
             localStorage.removeItem('player2Icon');
             player1Preset.value = DEFAULT_PLAYER1;
@@ -724,8 +735,9 @@
         });
 
         player2Preset.addEventListener('change', (e) => {
-            PLAYER2 = e.target.value;
-            localStorage.setItem('player2Icon', PLAYER2);
+            userPLAYER2 = e.target.value;
+            PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
+            localStorage.setItem('player2Icon', userPLAYER2);
             resetGame();
         });
 
@@ -748,8 +760,9 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    PLAYER2 = event.target.result;
-                    localStorage.setItem('player2Icon', PLAYER2);
+                    userPLAYER2 = event.target.result;
+                    PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
+                    localStorage.setItem('player2Icon', userPLAYER2);
                     player2Preset.value = '';
                     resetGame();
                 };
