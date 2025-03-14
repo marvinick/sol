@@ -19,12 +19,12 @@
         .board {
             display: grid;
             gap: 3px;
-            background-color: #f0f0f0; /* Default background */
+            background-color: #f0f0f0;
             padding: 5px;
             border: 2px solid #000;
             width: calc(100% - 10px);
             margin: 0;
-            transition: background-color 0.5s ease; /* Smooth transition for color changes */
+            transition: background-color 0.5s ease;
         }
         
         .cell {
@@ -257,28 +257,29 @@
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
-        let gameMode = "friend"; // Default mode
+        let gameMode = "friend";
         let currentOpponent = 0;
         let campaignOpponents = [];
         const allOpponents = [
-            { name: "Rookie", strategy: "random", icon: "🤖", backgroundColor: "#e6f3ff" },      // Light blue
-            { name: "Grunt", strategy: "center", icon: "👾", backgroundColor: "#e6ffe6" },       // Light green
-            { name: "Soldier", strategy: "randomBlock", icon: "🗡️", backgroundColor: "#fff0e6" }, // Light orange
-            { name: "Tactician", strategy: "smartCenter", icon: "🎯", backgroundColor: "#f2e6ff" }, // Light purple
-            { name: "Strategist", strategy: "smart", icon: "♟️", backgroundColor: "#ffe6e6" },   // Light red
-            { name: "Knight", strategy: "smartCorners", icon: "♞", backgroundColor: "#e6f2ff" }, // Light cyan
-            { name: "Commander", strategy: "smartBlock", icon: "🛡️", backgroundColor: "#f0e6ff" }, // Light lavender
-            { name: "General", strategy: "smartWin", icon: "⭐", backgroundColor: "#fff3e6" },    // Light peach
-            { name: "Master", strategy: "smartFull", icon: "👑", backgroundColor: "#e6fff0" },    // Light mint
-            { name: "Legend", strategy: "perfect", icon: "🏆", backgroundColor: "#fffbe6" }       // Light yellow
+            { name: "Rookie", strategy: "random", icon: "🤖", backgroundColor: "#e6f3ff" },
+            { name: "Grunt", strategy: "center", icon: "👾", backgroundColor: "#e6ffe6" },
+            { name: "Soldier", strategy: "randomBlock", icon: "🗡️", backgroundColor: "#fff0e6" },
+            { name: "Tactician", strategy: "smartCenter", icon: "🎯", backgroundColor: "#f2e6ff" },
+            { name: "Strategist", strategy: "smart", icon: "♟️", backgroundColor: "#ffe6e6" },
+            { name: "Knight", strategy: "smartCorners", icon: "♞", backgroundColor: "#e6f2ff" },
+            { name: "Commander", strategy: "smartBlock", icon: "🛡️", backgroundColor: "#f0e6ff" },
+            { name: "General", strategy: "smartWin", icon: "⭐", backgroundColor: "#fff3e6" },
+            { name: "Master", strategy: "smartFull", icon: "👑", backgroundColor: "#e6fff0" },
+            { name: "Legend", strategy: "perfect", icon: "🏆", backgroundColor: "#fffbe6" }
         ];
-        let boardSize = 3; // Default size
+        let boardSize = 3;
         const DEFAULT_PLAYER1 = 'X';
         const DEFAULT_PLAYER2 = 'O';
-        const DEFAULT_BACKGROUND = '#f0f0f0'; // Default board background
+        const DEFAULT_BACKGROUND = '#f0f0f0';
         let PLAYER1 = localStorage.getItem('player1Icon') || DEFAULT_PLAYER1;
         let PLAYER2 = localStorage.getItem('player2Icon') || DEFAULT_PLAYER2;
-        let userPLAYER2 = PLAYER2; // Store user's original P2 icon choice
+        let userPLAYER2 = PLAYER2;
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
         let scores = JSON.parse(localStorage.getItem('ticTacToeScores')) || {
             '3': { player1: 0, player2: 0, draws: 0 },
@@ -603,7 +604,11 @@
 
         function updateScoresDisplay() {
             if (gameMode === "campaign") {
-                scoresDisplay.textContent = `Progress: Opponent ${currentOpponent + 1}/${campaignOpponents.length} (${boardSize}x${boardSize})`;
+                if (currentOpponent >= campaignOpponents.length) {
+                    scoresDisplay.textContent = `Campaign Completed! (${boardSize}x${boardSize})`;
+                } else {
+                    scoresDisplay.textContent = `Campaign Progress: Opponent ${currentOpponent + 1}/${campaignOpponents.length} (${boardSize}x${boardSize})`;
+                }
             } else {
                 scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
             }
@@ -631,12 +636,13 @@
             gameActive = true;
             currentPlayer = 1;
             if (gameMode === "campaign" && currentOpponent < campaignOpponents.length) {
-                PLAYER2 = campaignOpponents[currentOpponent].icon; // Set AI icon
+                PLAYER2 = campaignOpponents[currentOpponent].icon;
             } else if (gameMode !== "campaign") {
-                PLAYER2 = userPLAYER2; // Revert to user's P2 icon
+                PLAYER2 = userPLAYER2;
             }
             updateBoardBackground();
             updateStatus();
+            updateScoresDisplay(); // Ensure counter updates on reset
             Array.from(board.children).forEach(cell => {
                 cell.innerHTML = '';
                 cell.classList.remove('winning-cell');
@@ -653,14 +659,15 @@
             if (currentOpponent >= campaignOpponents.length) {
                 status.textContent = "You are the Tic Tac Toe Champion!";
                 gameActive = false;
-                PLAYER2 = userPLAYER2; // Revert to user's P2 icon
+                PLAYER2 = userPLAYER2;
                 board.style.backgroundColor = DEFAULT_BACKGROUND;
-                updateScoresDisplay();
+                updateScoresDisplay(); // Update to show completion
             } else {
                 resetGame();
-                PLAYER2 = campaignOpponents[currentOpponent].icon; // Update AI icon
+                PLAYER2 = campaignOpponents[currentOpponent].icon;
                 updateBoardBackground();
                 status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
+                updateScoresDisplay(); // Update counter immediately
                 setTimeout(() => {
                     gameActive = true;
                     updateStatus();
@@ -672,24 +679,25 @@
             gameMode = "campaign";
             currentOpponent = 0;
             campaignOpponents = allOpponents.slice(0, numOpponents);
-            PLAYER2 = campaignOpponents[currentOpponent].icon; // Set first opponent's icon
+            PLAYER2 = campaignOpponents[currentOpponent].icon;
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
             gameActive = true;
             status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
             setTimeout(() => updateStatus(), 1000);
+            updateScoresDisplay(); // Initial update
         }
 
         function playWithAI() {
             gameMode = "singleAI";
-            PLAYER2 = userPLAYER2; // Use user's P2 icon
+            PLAYER2 = userPLAYER2;
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
         }
 
         function playWithFriend() {
             gameMode = "friend";
-            PLAYER2 = userPLAYER2; // Use user's P2 icon
+            PLAYER2 = userPLAYER2;
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
         }
@@ -711,6 +719,7 @@
                 currentOpponent = 0;
                 resetGame();
                 status.textContent = "Campaign reset! Start again.";
+                updateScoresDisplay(); // Update counter on reset
             } else {
                 scores = {
                     '3': { player1: 0, player2: 0, draws: 0 },
@@ -738,7 +747,7 @@
             const numOpponents = parseInt(e.target.value);
             if (numOpponents > 0) {
                 startCampaign(numOpponents);
-                e.target.selectedIndex = 0; // Reset to "Start Campaign..."
+                e.target.selectedIndex = 0;
             }
         });
 
@@ -758,6 +767,11 @@
         player1IconInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+                if (file.size > MAX_FILE_SIZE) {
+                    alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                    e.target.value = '';
+                    return;
+                }
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     PLAYER1 = event.target.result;
@@ -772,6 +786,11 @@
         player2IconInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+                if (file.size > MAX_FILE_SIZE) {
+                    alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                    e.target.value = '';
+                    return;
+                }
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     userPLAYER2 = event.target.result;
@@ -793,7 +812,6 @@
         resetScoresButton.addEventListener('click', resetScores);
         resetIconsButton.addEventListener('click', resetIcons);
 
-        // Initialize with default size
         setBoardSize(3);
         console.log('Page loaded, board should be visible');
     </script>
