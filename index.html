@@ -16,6 +16,25 @@
             padding: 10px 0;
         }
         
+        #game-title {
+            font-size: 8vw;
+            font-weight: bold;
+            margin: 10px 0;
+            text-align: center;
+            animation: titleFlash 4s ease infinite; /* Changed to 4s */
+        }
+        
+        #title-icons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #title-icons span {
+            font-size: 5vw;
+        }
+        
         .board {
             display: grid;
             gap: 3px;
@@ -114,33 +133,38 @@
             flex: 1;
             min-width: 80px;
             text-align: center;
-            transition: transform 0.1s ease, background-color 0.2s ease; /* Smooth transitions */
+            transition: transform 0.1s ease, background-color 0.2s ease;
         }
         
-        /* Flash animation */
         @keyframes flash {
             0% { background-color: #fff; }
-            50% { background-color: #ffff99; } /* Light yellow flash */
+            50% { background-color: #ffff99; }
             100% { background-color: inherit; }
+        }
+        
+        @keyframes titleFlash {
+            0% { color: #000; }
+            10% { color: #ffeb3b; } /* Flash starts */
+            20% { color: #000; }    /* Flash ends */
+            100% { color: #000; }   /* Remain black until next cycle */
         }
         
         button.active {
             font-weight: bold;
         }
         
-        /* Mode-specific active colors */
         #playWithAI.active {
-            background-color: #4CAF50; /* Green for AI */
+            background-color: #4CAF50;
             color: white;
         }
         
         #playWithFriend.active {
-            background-color: #2196F3; /* Blue for Friend */
+            background-color: #2196F3;
             color: white;
         }
         
         #startCampaign.active-option {
-            background-color: #9C27B0; /* Purple for Campaign */
+            background-color: #9C27B0;
             color: white;
         }
         
@@ -194,6 +218,8 @@
 
         @media (min-width: 600px) {
             body { padding: 10px; }
+            #game-title { font-size: 48px; }
+            #title-icons span { font-size: 30px; }
             .board { 
                 max-width: 400px; 
                 width: 400px;
@@ -212,6 +238,12 @@
     </style>
 </head>
 <body>
+    <h1 id="game-title">Tic Tac Toe Fighter</h1>
+    <div id="title-icons">
+        <span>⭐</span>
+        <span>🚀</span>
+        <span>👑</span>
+    </div>
     <div id="status">Player 1's turn (X)</div>
     <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
     <div class="board" id="board"></div>
@@ -280,7 +312,7 @@
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
-        let gameMode = "friend"; // Default mode
+        let gameMode = "friend";
         let currentOpponent = 0;
         let campaignOpponents = [];
         const allOpponents = [
@@ -302,7 +334,7 @@
         let PLAYER1 = localStorage.getItem('player1Icon') || DEFAULT_PLAYER1;
         let PLAYER2 = localStorage.getItem('player2Icon') || DEFAULT_PLAYER2;
         let userPLAYER2 = PLAYER2;
-        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
         let scores = JSON.parse(localStorage.getItem('ticTacToeScores')) || {
             '3': { player1: 0, player2: 0, draws: 0 },
@@ -718,7 +750,7 @@
             setTimeout(() => {
                 button.style.transform = 'scale(1)';
                 button.style.animation = 'none';
-            }, 200); // Match duration of flash animation
+            }, 200);
         }
 
         function playWithAI() {
@@ -857,7 +889,6 @@
             }
         });
 
-        // Add animation to all button clicks
         const allButtons = [resetButton, playWithAIButton, playWithFriendButton, size3x3Button, size4x4Button, size5x5Button, resetScoresButton, resetIconsButton];
         allButtons.forEach(button => {
             button.addEventListener('click', (e) => {
@@ -874,7 +905,6 @@
         resetScoresButton.addEventListener('click', resetScores);
         resetIconsButton.addEventListener('click', resetIcons);
 
-        // Initialize with default mode
         setBoardSize(3);
         updateModeButtons();
         console.log('Page loaded, board should be visible');
