@@ -289,8 +289,9 @@
 
         function generateWinningCombinations(size) {
             const combos = [];
-            const winLength = size === 3 ? 3 : 4;
+            const winLength = size; // Win length matches board size
             
+            // Rows
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col <= size - winLength; col++) {
                     const combo = [];
@@ -299,6 +300,7 @@
                 }
             }
             
+            // Columns
             for (let col = 0; col < size; col++) {
                 for (let row = 0; row <= size - winLength; row++) {
                     const combo = [];
@@ -307,6 +309,7 @@
                 }
             }
             
+            // Diagonals (top-left to bottom-right)
             for (let row = 0; row <= size - winLength; row++) {
                 for (let col = 0; col <= size - winLength; col++) {
                     const combo = [];
@@ -315,6 +318,7 @@
                 }
             }
             
+            // Diagonals (top-right to bottom-left)
             for (let row = 0; row <= size - winLength; row++) {
                 for (let col = size - 1; col >= winLength - 1; col--) {
                     const combo = [];
@@ -501,7 +505,7 @@
         }
 
         function findWinningMove(player) {
-            const winLength = boardSize === 3 ? 3 : 4;
+            const winLength = boardSize; // Updated to match board size
             for (let combo of winningCombinations) {
                 let emptyIndex = -1;
                 let playerCount = 0;
@@ -642,7 +646,7 @@
             }
             updateBoardBackground();
             updateStatus();
-            updateScoresDisplay(); // Ensure counter updates on reset
+            updateScoresDisplay();
             Array.from(board.children).forEach(cell => {
                 cell.innerHTML = '';
                 cell.classList.remove('winning-cell');
@@ -661,13 +665,13 @@
                 gameActive = false;
                 PLAYER2 = userPLAYER2;
                 board.style.backgroundColor = DEFAULT_BACKGROUND;
-                updateScoresDisplay(); // Update to show completion
+                updateScoresDisplay();
             } else {
                 resetGame();
                 PLAYER2 = campaignOpponents[currentOpponent].icon;
                 updateBoardBackground();
                 status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
-                updateScoresDisplay(); // Update counter immediately
+                updateScoresDisplay();
                 setTimeout(() => {
                     gameActive = true;
                     updateStatus();
@@ -685,7 +689,7 @@
             gameActive = true;
             status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
             setTimeout(() => updateStatus(), 1000);
-            updateScoresDisplay(); // Initial update
+            updateScoresDisplay();
         }
 
         function playWithAI() {
@@ -719,7 +723,7 @@
                 currentOpponent = 0;
                 resetGame();
                 status.textContent = "Campaign reset! Start again.";
-                updateScoresDisplay(); // Update counter on reset
+                updateScoresDisplay();
             } else {
                 scores = {
                     '3': { player1: 0, player2: 0, draws: 0 },
