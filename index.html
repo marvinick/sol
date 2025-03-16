@@ -114,11 +114,34 @@
             flex: 1;
             min-width: 80px;
             text-align: center;
+            transition: transform 0.1s ease, background-color 0.2s ease; /* Smooth transitions */
+        }
+        
+        /* Flash animation */
+        @keyframes flash {
+            0% { background-color: #fff; }
+            50% { background-color: #ffff99; } /* Light yellow flash */
+            100% { background-color: inherit; }
         }
         
         button.active {
-            background-color: #bbb;
             font-weight: bold;
+        }
+        
+        /* Mode-specific active colors */
+        #playWithAI.active {
+            background-color: #4CAF50; /* Green for AI */
+            color: white;
+        }
+        
+        #playWithFriend.active {
+            background-color: #2196F3; /* Blue for Friend */
+            color: white;
+        }
+        
+        #startCampaign.active-option {
+            background-color: #9C27B0; /* Purple for Campaign */
+            color: white;
         }
         
         input[type="file"] {
@@ -201,7 +224,7 @@
         </div>
         <div class="control-group" id="mode-controls">
             <button id="playWithAI">Play with AI</button>
-            <button id="playWithFriend">Play with Friend</button>
+            <button id="playWithFriend" class="active">Play with Friend</button>
             <select id="startCampaign">
                 <option value="0" selected disabled>Start Campaign...</option>
                 <option value="3">Campaign (3 Opponents)</option>
@@ -257,7 +280,7 @@
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
-        let gameMode = "friend";
+        let gameMode = "friend"; // Default mode
         let currentOpponent = 0;
         let campaignOpponents = [];
         const allOpponents = [
@@ -289,9 +312,8 @@
 
         function generateWinningCombinations(size) {
             const combos = [];
-            const winLength = size; // Win length matches board size
+            const winLength = size;
             
-            // Rows
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col <= size - winLength; col++) {
                     const combo = [];
@@ -300,7 +322,6 @@
                 }
             }
             
-            // Columns
             for (let col = 0; col < size; col++) {
                 for (let row = 0; row <= size - winLength; row++) {
                     const combo = [];
@@ -309,7 +330,6 @@
                 }
             }
             
-            // Diagonals (top-left to bottom-right)
             for (let row = 0; row <= size - winLength; row++) {
                 for (let col = 0; col <= size - winLength; col++) {
                     const combo = [];
@@ -318,7 +338,6 @@
                 }
             }
             
-            // Diagonals (top-right to bottom-left)
             for (let row = 0; row <= size - winLength; row++) {
                 for (let col = size - 1; col >= winLength - 1; col--) {
                     const combo = [];
@@ -505,7 +524,7 @@
         }
 
         function findWinningMove(player) {
-            const winLength = boardSize; // Updated to match board size
+            const winLength = boardSize;
             for (let combo of winningCombinations) {
                 let emptyIndex = -1;
                 let playerCount = 0;
@@ -679,6 +698,47 @@
             }
         }
 
+        function updateModeButtons() {
+            playWithAIButton.classList.remove('active');
+            playWithFriendButton.classList.remove('active');
+            startCampaignSelect.classList.remove('active-option');
+            
+            if (gameMode === "singleAI") {
+                playWithAIButton.classList.add('active');
+            } else if (gameMode === "friend") {
+                playWithFriendButton.classList.add('active');
+            } else if (gameMode === "campaign") {
+                startCampaignSelect.classList.add('active-option');
+            }
+        }
+
+        function addButtonAnimation(button) {
+            button.style.transform = 'scale(0.95)';
+            button.style.animation = 'flash 0.2s ease';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+                button.style.animation = 'none';
+            }, 200); // Match duration of flash animation
+        }
+
+        function playWithAI() {
+            gameMode = "singleAI";
+            PLAYER2 = userPLAYER2;
+            winningCombinations = generateWinningCombinations(boardSize);
+            createBoard();
+            updateModeButtons();
+            addButtonAnimation(playWithAIButton);
+        }
+
+        function playWithFriend() {
+            gameMode = "friend";
+            PLAYER2 = userPLAYER2;
+            winningCombinations = generateWinningCombinations(boardSize);
+            createBoard();
+            updateModeButtons();
+            addButtonAnimation(playWithFriendButton);
+        }
+
         function startCampaign(numOpponents) {
             gameMode = "campaign";
             currentOpponent = 0;
@@ -690,20 +750,8 @@
             status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
             setTimeout(() => updateStatus(), 1000);
             updateScoresDisplay();
-        }
-
-        function playWithAI() {
-            gameMode = "singleAI";
-            PLAYER2 = userPLAYER2;
-            winningCombinations = generateWinningCombinations(boardSize);
-            createBoard();
-        }
-
-        function playWithFriend() {
-            gameMode = "friend";
-            PLAYER2 = userPLAYER2;
-            winningCombinations = generateWinningCombinations(boardSize);
-            createBoard();
+            updateModeButtons();
+            addButtonAnimation(startCampaignSelect);
         }
 
         function setBoardSize(size) {
@@ -759,6 +807,7 @@
             PLAYER1 = e.target.value;
             localStorage.setItem('player1Icon', PLAYER1);
             resetGame();
+            addButtonAnimation(player1Preset);
         });
 
         player2Preset.addEventListener('change', (e) => {
@@ -766,6 +815,7 @@
             PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
             localStorage.setItem('player2Icon', userPLAYER2);
             resetGame();
+            addButtonAnimation(player2Preset);
         });
 
         player1IconInput.addEventListener('change', (e) => {
@@ -807,16 +857,26 @@
             }
         });
 
+        // Add animation to all button clicks
+        const allButtons = [resetButton, playWithAIButton, playWithFriendButton, size3x3Button, size4x4Button, size5x5Button, resetScoresButton, resetIconsButton];
+        allButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                addButtonAnimation(e.target);
+            });
+        });
+
         resetButton.addEventListener('click', resetGame);
         playWithAIButton.addEventListener('click', playWithAI);
         playWithFriendButton.addEventListener('click', playWithFriend);
-        size3x3Button.addEventListener('click', () => setBoardSize(3));
-        size4x4Button.addEventListener('click', () => setBoardSize(4));
-        size5x5Button.addEventListener('click', () => setBoardSize(5));
+        size3x3Button.addEventListener('click', () => { setBoardSize(3); });
+        size4x4Button.addEventListener('click', () => { setBoardSize(4); });
+        size5x5Button.addEventListener('click', () => { setBoardSize(5); });
         resetScoresButton.addEventListener('click', resetScores);
         resetIconsButton.addEventListener('click', resetIcons);
 
+        // Initialize with default mode
         setBoardSize(3);
+        updateModeButtons();
         console.log('Page loaded, board should be visible');
     </script>
 </body>
