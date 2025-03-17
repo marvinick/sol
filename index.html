@@ -16,12 +16,86 @@
             padding: 10px 0;
         }
         
+        /* Landing Page Styles */
+        #landing-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+            background-color: #f9f9f9;
+        }
+        
+        #landing-page.hidden {
+            display: none;
+        }
+        
+        #landing-title {
+            font-size: 10vw;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            animation: titleFlash 4s ease infinite;
+        }
+        
+        #landing-icons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        #landing-icons span {
+            font-size: 6vw;
+        }
+        
+        #mode-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 80%;
+            max-width: 400px;
+        }
+        
+        .mode-button {
+            padding: 15px;
+            font-size: 5vw;
+            font-weight: bold;
+            background-color: #ddd;
+            border: 2px solid #333;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+        }
+        
+        .mode-button:hover {
+            background-color: #ccc;
+        }
+        
+        .mode-button:active {
+            transform: scale(0.95);
+            animation: flash 0.2s ease;
+        }
+        
+        /* Game Page Styles */
+        #game-page {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        #game-page.visible {
+            display: flex;
+        }
+        
         #game-title {
             font-size: 8vw;
             font-weight: bold;
             margin: 10px 0;
             text-align: center;
-            animation: titleFlash 4s ease infinite; /* Changed to 4s */
+            animation: titleFlash 4s ease infinite;
         }
         
         #title-icons {
@@ -144,9 +218,9 @@
         
         @keyframes titleFlash {
             0% { color: #000; }
-            10% { color: #ffeb3b; } /* Flash starts */
-            20% { color: #000; }    /* Flash ends */
-            100% { color: #000; }   /* Remain black until next cycle */
+            10% { color: #ffeb3b; }
+            20% { color: #000; }
+            100% { color: #000; }
         }
         
         button.active {
@@ -218,6 +292,9 @@
 
         @media (min-width: 600px) {
             body { padding: 10px; }
+            #landing-title { font-size: 60px; }
+            #landing-icons span { font-size: 36px; }
+            .mode-button { font-size: 24px; padding: 20px; }
             #game-title { font-size: 48px; }
             #title-icons span { font-size: 30px; }
             .board { 
@@ -238,59 +315,86 @@
     </style>
 </head>
 <body>
-    <h1 id="game-title">Tic Tac Toe Fighter</h1>
-    <div id="title-icons">
-        <span>⭐</span>
-        <span>🚀</span>
-        <span>👑</span>
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <h1 id="landing-title">Tic Tac Toe Fighter</h1>
+        <div id="landing-icons">
+            <span>⭐</span>
+            <span>🚀</span>
+            <span>👑</span>
+        </div>
+        <div id="mode-selection">
+            <button class="mode-button" id="landing-playWithAI">Play with AI</button>
+            <button class="mode-button" id="landing-playWithFriend">Play with Friend</button>
+            <button class="mode-button" id="landing-startCampaign">Start Campaign</button>
+        </div>
     </div>
-    <div id="status">Player 1's turn (X)</div>
-    <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
-    <div class="board" id="board"></div>
-    <div id="winner-text"></div>
-    <div id="controls">
-        <div class="control-group" id="size-controls">
-            <button id="size3x3" class="active">3x3 (9 tiles)</button>
-            <button id="size4x4">4x4 (16 tiles)</button>
-            <button id="size5x5">5x5 (25 tiles)</button>
+
+    <!-- Game Page -->
+    <div id="game-page">
+        <h1 id="game-title">Tic Tac Toe Fighter</h1>
+        <div id="title-icons">
+            <span>⭐</span>
+            <span>🚀</span>
+            <span>👑</span>
         </div>
-        <div class="control-group" id="mode-controls">
-            <button id="playWithAI">Play with AI</button>
-            <button id="playWithFriend" class="active">Play with Friend</button>
-            <select id="startCampaign">
-                <option value="0" selected disabled>Start Campaign...</option>
-                <option value="3">Campaign (3 Opponents)</option>
-                <option value="5">Campaign (5 Opponents)</option>
-                <option value="8">Campaign (8 Opponents)</option>
-                <option value="10">Campaign (10 Opponents)</option>
-            </select>
-            <button id="reset">Reset Game</button>
-            <button id="resetScores">Reset Scores</button>
-        </div>
-        <div class="control-group" id="icon-controls">
-            <select id="player1Preset">
-                <option value="X">X (Default)</option>
-                <option value="⭐">⭐ Star</option>
-                <option value="🐱">🐱 Cat</option>
-                <option value="🚀">🚀 Rocket</option>
-                <option value="🌟">🌟 Sparkle</option>
-            </select>
-            <label for="player1Icon">Upload P1</label>
-            <input type="file" id="player1Icon" accept="image/*">
-            <select id="player2Preset">
-                <option value="O">O (Default)</option>
-                <option value="💥">💥 Explosion</option>
-                <option value="🐶">🐶 Dog</option>
-                <option value="🪐">🪐 Planet</option>
-                <option value="⚡">⚡ Lightning</option>
-            </select>
-            <label for="player2Icon">Upload P2</label>
-            <input type="file" id="player2Icon" accept="image/*">
-            <button id="resetIcons">Reset to Default</button>
+        <div id="status">Player 1's turn (X)</div>
+        <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
+        <div class="board" id="board"></div>
+        <div id="winner-text"></div>
+        <div id="controls">
+            <div class="control-group" id="size-controls">
+                <button id="size3x3" class="active">3x3 (9 tiles)</button>
+                <button id="size4x4">4x4 (16 tiles)</button>
+                <button id="size5x5">5x5 (25 tiles)</button>
+            </div>
+            <div class="control-group" id="mode-controls">
+                <button id="playWithAI">Play with AI</button>
+                <button id="playWithFriend" class="active">Play with Friend</button>
+                <select id="startCampaign">
+                    <option value="0" selected disabled>Start Campaign...</option>
+                    <option value="3">Campaign (3 Opponents)</option>
+                    <option value="5">Campaign (5 Opponents)</option>
+                    <option value="8">Campaign (8 Opponents)</option>
+                    <option value="10">Campaign (10 Opponents)</option>
+                </select>
+                <button id="reset">Reset Game</button>
+                <button id="resetScores">Reset Scores</button>
+                <button id="backToMenu">Back to Menu</button> <!-- New Button -->
+            </div>
+            <div class="control-group" id="icon-controls">
+                <select id="player1Preset">
+                    <option value="X">X (Default)</option>
+                    <option value="⭐">⭐ Star</option>
+                    <option value="🐱">🐱 Cat</option>
+                    <option value="🚀">🚀 Rocket</option>
+                    <option value="🌟">🌟 Sparkle</option>
+                </select>
+                <label for="player1Icon">Upload P1</label>
+                <input type="file" id="player1Icon" accept="image/*">
+                <select id="player2Preset">
+                    <option value="O">O (Default)</option>
+                    <option value="💥">💥 Explosion</option>
+                    <option value="🐶">🐶 Dog</option>
+                    <option value="🪐">🪐 Planet</option>
+                    <option value="⚡">⚡ Lightning</option>
+                </select>
+                <label for="player2Icon">Upload P2</label>
+                <input type="file" id="player2Icon" accept="image/*">
+                <button id="resetIcons">Reset to Default</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // Landing Page Elements
+        const landingPage = document.getElementById('landing-page');
+        const landingPlayWithAI = document.getElementById('landing-playWithAI');
+        const landingPlayWithFriend = document.getElementById('landing-playWithFriend');
+        const landingStartCampaign = document.getElementById('landing-startCampaign');
+
+        // Game Page Elements
+        const gamePage = document.getElementById('game-page');
         const board = document.getElementById('board');
         const status = document.getElementById('status');
         const scoresDisplay = document.getElementById('scores');
@@ -303,6 +407,7 @@
         const size4x4Button = document.getElementById('size4x4');
         const size5x5Button = document.getElementById('size5x5');
         const resetScoresButton = document.getElementById('resetScores');
+        const backToMenuButton = document.getElementById('backToMenu'); // New Button
         const player1IconInput = document.getElementById('player1Icon');
         const player2IconInput = document.getElementById('player2Icon');
         const resetIconsButton = document.getElementById('resetIcons');
@@ -312,7 +417,7 @@
         let gameBoard = [];
         let gameActive = true;
         let currentPlayer = 1;
-        let gameMode = "friend";
+        let gameMode = "friend"; // Default mode
         let currentOpponent = 0;
         let campaignOpponents = [];
         const allOpponents = [
@@ -827,6 +932,47 @@
             resetGame();
         }
 
+        // Navigation Functions
+        function showGamePage() {
+            landingPage.classList.add('hidden');
+            gamePage.classList.add('visible');
+        }
+
+        function showLandingPage() {
+            gamePage.classList.remove('visible');
+            landingPage.classList.remove('hidden');
+            // Reset game state
+            gameBoard = [];
+            gameActive = true;
+            currentPlayer = 1;
+            currentOpponent = 0;
+            campaignOpponents = [];
+            board.innerHTML = '';
+            document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
+            winnerText.classList.remove('winner-animation');
+            winnerText.style.display = 'none';
+        }
+
+        // Landing Page Event Listeners
+        landingPlayWithAI.addEventListener('click', () => {
+            gameMode = "singleAI";
+            showGamePage();
+            playWithAI();
+        });
+
+        landingPlayWithFriend.addEventListener('click', () => {
+            gameMode = "friend";
+            showGamePage();
+            playWithFriend();
+        });
+
+        landingStartCampaign.addEventListener('click', () => {
+            gameMode = "campaign";
+            startCampaign(5); // Default to 5 opponents
+            showGamePage();
+        });
+
+        // Game Page Event Listeners
         startCampaignSelect.addEventListener('change', (e) => {
             const numOpponents = parseInt(e.target.value);
             if (numOpponents > 0) {
@@ -889,7 +1035,7 @@
             }
         });
 
-        const allButtons = [resetButton, playWithAIButton, playWithFriendButton, size3x3Button, size4x4Button, size5x5Button, resetScoresButton, resetIconsButton];
+        const allButtons = [resetButton, playWithAIButton, playWithFriendButton, size3x3Button, size4x4Button, size5x5Button, resetScoresButton, backToMenuButton, resetIconsButton];
         allButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 addButtonAnimation(e.target);
@@ -903,11 +1049,11 @@
         size4x4Button.addEventListener('click', () => { setBoardSize(4); });
         size5x5Button.addEventListener('click', () => { setBoardSize(5); });
         resetScoresButton.addEventListener('click', resetScores);
+        backToMenuButton.addEventListener('click', showLandingPage); // New Event Listener
         resetIconsButton.addEventListener('click', resetIcons);
 
-        setBoardSize(3);
-        updateModeButtons();
-        console.log('Page loaded, board should be visible');
+        // Initial setup (landing page visible, game page hidden)
+        console.log('Page loaded, landing page should be visible');
     </script>
 </body>
 </html>
