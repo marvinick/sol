@@ -56,6 +56,7 @@
             gap: 20px;
             width: 80%;
             max-width: 400px;
+            position: relative;
         }
         
         .mode-button {
@@ -76,6 +77,28 @@
         .mode-button:active {
             transform: scale(0.95);
             animation: flash 0.2s ease;
+        }
+        
+        #campaign-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+        
+        #campaign-dropdown select {
+            width: 100%;
+            padding: 10px;
+            font-size: 5vw;
+            border: none;
+            background-color: #ddd;
+            border-radius: 5px;
         }
         
         /* Game Page Styles */
@@ -223,25 +246,6 @@
             100% { color: #000; }
         }
         
-        button.active {
-            font-weight: bold;
-        }
-        
-        #playWithAI.active {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        #playWithFriend.active {
-            background-color: #2196F3;
-            color: white;
-        }
-        
-        #startCampaign.active-option {
-            background-color: #9C27B0;
-            color: white;
-        }
-        
         input[type="file"] {
             display: none;
         }
@@ -295,6 +299,7 @@
             #landing-title { font-size: 60px; }
             #landing-icons span { font-size: 36px; }
             .mode-button { font-size: 24px; padding: 20px; }
+            #campaign-dropdown select { font-size: 20px; }
             #game-title { font-size: 48px; }
             #title-icons span { font-size: 30px; }
             .board { 
@@ -327,6 +332,15 @@
             <button class="mode-button" id="landing-playWithAI">Play with AI</button>
             <button class="mode-button" id="landing-playWithFriend">Play with Friend</button>
             <button class="mode-button" id="landing-startCampaign">Start Campaign</button>
+            <div id="campaign-dropdown">
+                <select id="campaign-select">
+                    <option value="0" selected disabled>Select Campaign...</option>
+                    <option value="3">Campaign (3 Opponents)</option>
+                    <option value="5">Campaign (5 Opponents)</option>
+                    <option value="8">Campaign (8 Opponents)</option>
+                    <option value="10">Campaign (10 Opponents)</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -349,18 +363,9 @@
                 <button id="size5x5">5x5 (25 tiles)</button>
             </div>
             <div class="control-group" id="mode-controls">
-                <button id="playWithAI">Play with AI</button>
-                <button id="playWithFriend" class="active">Play with Friend</button>
-                <select id="startCampaign">
-                    <option value="0" selected disabled>Start Campaign...</option>
-                    <option value="3">Campaign (3 Opponents)</option>
-                    <option value="5">Campaign (5 Opponents)</option>
-                    <option value="8">Campaign (8 Opponents)</option>
-                    <option value="10">Campaign (10 Opponents)</option>
-                </select>
                 <button id="reset">Reset Game</button>
                 <button id="resetScores">Reset Scores</button>
-                <button id="backToMenu">Back to Menu</button> <!-- New Button -->
+                <button id="backToMenu">Back to Menu</button>
             </div>
             <div class="control-group" id="icon-controls">
                 <select id="player1Preset">
@@ -392,6 +397,8 @@
         const landingPlayWithAI = document.getElementById('landing-playWithAI');
         const landingPlayWithFriend = document.getElementById('landing-playWithFriend');
         const landingStartCampaign = document.getElementById('landing-startCampaign');
+        const campaignDropdown = document.getElementById('campaign-dropdown');
+        const campaignSelect = document.getElementById('campaign-select');
 
         // Game Page Elements
         const gamePage = document.getElementById('game-page');
@@ -400,14 +407,11 @@
         const scoresDisplay = document.getElementById('scores');
         const winnerText = document.getElementById('winner-text');
         const resetButton = document.getElementById('reset');
-        const playWithAIButton = document.getElementById('playWithAI');
-        const playWithFriendButton = document.getElementById('playWithFriend');
-        const startCampaignSelect = document.getElementById('startCampaign');
         const size3x3Button = document.getElementById('size3x3');
         const size4x4Button = document.getElementById('size4x4');
         const size5x5Button = document.getElementById('size5x5');
         const resetScoresButton = document.getElementById('resetScores');
-        const backToMenuButton = document.getElementById('backToMenu'); // New Button
+        const backToMenuButton = document.getElementById('backToMenu');
         const player1IconInput = document.getElementById('player1Icon');
         const player2IconInput = document.getElementById('player2Icon');
         const resetIconsButton = document.getElementById('resetIcons');
@@ -835,20 +839,6 @@
             }
         }
 
-        function updateModeButtons() {
-            playWithAIButton.classList.remove('active');
-            playWithFriendButton.classList.remove('active');
-            startCampaignSelect.classList.remove('active-option');
-            
-            if (gameMode === "singleAI") {
-                playWithAIButton.classList.add('active');
-            } else if (gameMode === "friend") {
-                playWithFriendButton.classList.add('active');
-            } else if (gameMode === "campaign") {
-                startCampaignSelect.classList.add('active-option');
-            }
-        }
-
         function addButtonAnimation(button) {
             button.style.transform = 'scale(0.95)';
             button.style.animation = 'flash 0.2s ease';
@@ -863,8 +853,7 @@
             PLAYER2 = userPLAYER2;
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
-            updateModeButtons();
-            addButtonAnimation(playWithAIButton);
+            addButtonAnimation(landingPlayWithAI);
         }
 
         function playWithFriend() {
@@ -872,8 +861,7 @@
             PLAYER2 = userPLAYER2;
             winningCombinations = generateWinningCombinations(boardSize);
             createBoard();
-            updateModeButtons();
-            addButtonAnimation(playWithFriendButton);
+            addButtonAnimation(landingPlayWithFriend);
         }
 
         function startCampaign(numOpponents) {
@@ -887,8 +875,7 @@
             status.textContent = `Prepare to face ${campaignOpponents[currentOpponent].name}!`;
             setTimeout(() => updateStatus(), 1000);
             updateScoresDisplay();
-            updateModeButtons();
-            addButtonAnimation(startCampaignSelect);
+            addButtonAnimation(landingStartCampaign);
         }
 
         function setBoardSize(size) {
@@ -941,6 +928,7 @@
         function showLandingPage() {
             gamePage.classList.remove('visible');
             landingPage.classList.remove('hidden');
+            campaignDropdown.style.display = 'none'; // Hide dropdown when returning
             // Reset game state
             gameBoard = [];
             gameActive = true;
@@ -955,32 +943,30 @@
 
         // Landing Page Event Listeners
         landingPlayWithAI.addEventListener('click', () => {
-            gameMode = "singleAI";
-            showGamePage();
             playWithAI();
+            showGamePage();
         });
 
         landingPlayWithFriend.addEventListener('click', () => {
-            gameMode = "friend";
-            showGamePage();
             playWithFriend();
+            showGamePage();
         });
 
         landingStartCampaign.addEventListener('click', () => {
-            gameMode = "campaign";
-            startCampaign(5); // Default to 5 opponents
-            showGamePage();
+            campaignDropdown.style.display = campaignDropdown.style.display === 'block' ? 'none' : 'block';
         });
 
-        // Game Page Event Listeners
-        startCampaignSelect.addEventListener('change', (e) => {
+        campaignSelect.addEventListener('change', (e) => {
             const numOpponents = parseInt(e.target.value);
             if (numOpponents > 0) {
                 startCampaign(numOpponents);
-                e.target.selectedIndex = 0;
+                showGamePage();
+                campaignDropdown.style.display = 'none';
+                e.target.selectedIndex = 0; // Reset dropdown
             }
         });
 
+        // Game Page Event Listeners
         player1Preset.addEventListener('change', (e) => {
             PLAYER1 = e.target.value;
             localStorage.setItem('player1Icon', PLAYER1);
@@ -1035,7 +1021,7 @@
             }
         });
 
-        const allButtons = [resetButton, playWithAIButton, playWithFriendButton, size3x3Button, size4x4Button, size5x5Button, resetScoresButton, backToMenuButton, resetIconsButton];
+        const allButtons = [resetButton, size3x3Button, size4x4Button, size5x5Button, resetScoresButton, backToMenuButton, resetIconsButton];
         allButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 addButtonAnimation(e.target);
@@ -1043,13 +1029,11 @@
         });
 
         resetButton.addEventListener('click', resetGame);
-        playWithAIButton.addEventListener('click', playWithAI);
-        playWithFriendButton.addEventListener('click', playWithFriend);
         size3x3Button.addEventListener('click', () => { setBoardSize(3); });
         size4x4Button.addEventListener('click', () => { setBoardSize(4); });
         size5x5Button.addEventListener('click', () => { setBoardSize(5); });
         resetScoresButton.addEventListener('click', resetScores);
-        backToMenuButton.addEventListener('click', showLandingPage); // New Event Listener
+        backToMenuButton.addEventListener('click', showLandingPage);
         resetIconsButton.addEventListener('click', resetIcons);
 
         // Initial setup (landing page visible, game page hidden)
