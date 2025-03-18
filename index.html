@@ -63,15 +63,15 @@
             padding: 15px;
             font-size: 5vw;
             font-weight: bold;
-            background-color: #ddd;
-            border: 2px solid #333;
+            background-color: white;
+            border: 1px solid #333;
             border-radius: 10px;
             cursor: pointer;
             transition: transform 0.1s ease, background-color 0.2s ease;
         }
         
         .mode-button:hover {
-            background-color: #ccc;
+            background-color: #f2f2f2;
         }
         
         .mode-button:active {
@@ -294,6 +294,39 @@
             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
         }
 
+        #game-over-options {
+            position: fixed;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+            opacity: 0;
+            max-width: 90%;
+        }
+
+        .game-over-button {
+            padding: 10px 20px;
+            font-size: 4vw;
+            font-weight: bold;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+            text-align: center;
+        }
+
+        .game-over-button:hover {
+            background-color: #f2f2f2;
+        }
+
+        .game-over-button:active {
+            transform: scale(0.95);
+        }
+
         @media (min-width: 600px) {
             body { padding: 10px; }
             #landing-title { font-size: 60px; }
@@ -316,6 +349,13 @@
             button, label, select { padding: 10px 20px; font-size: 16px; }
             #winner-text { font-size: 48px; padding: 20px; }
             .confetti { width: 10px; height: 10px; }
+            #game-over-options {
+                top: 70%;
+            }
+            .game-over-button {
+                font-size: 24px;
+                padding: 15px 30px;
+            }
         }
     </style>
 </head>
@@ -353,6 +393,10 @@
         <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
         <div class="board" id="board"></div>
         <div id="winner-text"></div>
+        <div id="game-over-options">
+            <button class="game-over-button" id="play-again">Play Again</button>
+            <button class="game-over-button" id="return-to-title">Return to Title Screen</button>
+        </div>
         <div id="controls">
             <div class="control-group" id="size-controls">
                 <button id="size3x3" class="active">3x3 (9 tiles)</button>
@@ -403,6 +447,9 @@
         const status = document.getElementById('status');
         const scoresDisplay = document.getElementById('scores');
         const winnerText = document.getElementById('winner-text');
+        const gameOverOptions = document.getElementById('game-over-options');
+        const playAgainButton = document.getElementById('play-again');
+        const returnToTitleButton = document.getElementById('return-to-title');
         const resetButton = document.getElementById('reset');
         const size3x3Button = document.getElementById('size3x3');
         const size4x4Button = document.getElementById('size4x4');
@@ -533,8 +580,6 @@
                     gameActive = false;
                     highlightWinningCells(winningCombo);
                     startConfetti();
-                    currentOpponent++;
-                    setTimeout(nextOpponent, 3000);
                 } else {
                     const winnerMessage = `Player ${currentPlayer} wins!`;
                     status.textContent = winnerMessage;
@@ -553,7 +598,6 @@
                     showWinnerAnimation("Draw! Fight again!");
                     gameActive = false;
                     startConfetti();
-                    setTimeout(resetGame, 3000);
                 } else {
                     status.textContent = "It's a draw!";
                     gameActive = false;
@@ -628,7 +672,6 @@
                     gameActive = false;
                     highlightWinningCells(winningCombo);
                     startConfetti();
-                    setTimeout(resetGame, 3000);
                 } else {
                     status.textContent = "AI wins!";
                     gameActive = false;
@@ -646,7 +689,6 @@
                     showWinnerAnimation("Draw! Fight again!");
                     gameActive = false;
                     startConfetti();
-                    setTimeout(resetGame, 3000);
                 } else {
                     status.textContent = "It's a draw!";
                     gameActive = false;
@@ -727,12 +769,23 @@
             winnerText.textContent = message;
             winnerText.style.display = 'block';
             winnerText.classList.add('winner-animation');
+            gameOverOptions.style.display = 'flex';
+            gameOverOptions.style.opacity = '0';
             
             setTimeout(() => {
-                console.log('Hiding winner animation');
-                winnerText.classList.remove('winner-animation');
-                winnerText.style.display = 'none';
-            }, 3000);
+                gameOverOptions.style.transition = 'opacity 0.5s ease';
+                gameOverOptions.style.opacity = '1';
+            }, 2000);
+        }
+
+        function hideGameOverUI() {
+            winnerText.classList.remove('winner-animation');
+            winnerText.style.display = 'none';
+            gameOverOptions.style.opacity = '0';
+            setTimeout(() => {
+                gameOverOptions.style.display = 'none';
+                gameOverOptions.style.transition = 'none';
+            }, 500);
         }
 
         function startConfetti() {
@@ -925,8 +978,7 @@
         function showLandingPage() {
             gamePage.classList.remove('visible');
             landingPage.classList.remove('hidden');
-            campaignDropdown.style.display = 'none'; // Hide dropdown when returning
-            // Reset game state
+            campaignDropdown.style.display = 'none';
             gameBoard = [];
             gameActive = true;
             currentPlayer = 1;
@@ -938,7 +990,7 @@
             winnerText.style.display = 'none';
         }
 
-        // Landing Page Event Listeners
+        // Event Listeners
         landingPlayWithAI.addEventListener('click', () => {
             playWithAI();
             showGamePage();
@@ -959,11 +1011,10 @@
                 startCampaign(numOpponents);
                 showGamePage();
                 campaignDropdown.style.display = 'none';
-                e.target.selectedIndex = 0; // Reset dropdown
+                e.target.selectedIndex = 0;
             }
         });
 
-        // Game Page Event Listeners
         player1Preset.addEventListener('change', (e) => {
             PLAYER1 = e.target.value;
             localStorage.setItem('player1Icon', PLAYER1);
@@ -1033,7 +1084,23 @@
         backToMenuButton.addEventListener('click', showLandingPage);
         resetIconsButton.addEventListener('click', resetIcons);
 
-        // Initial setup (landing page visible, game page hidden)
+        playAgainButton.addEventListener('click', () => {
+            addButtonAnimation(playAgainButton);
+            hideGameOverUI();
+            if (gameMode === "campaign" && winnerText.textContent.includes("Victory")) {
+                currentOpponent++;
+                nextOpponent();
+            } else {
+                resetGame();
+            }
+        });
+
+        returnToTitleButton.addEventListener('click', () => {
+            addButtonAnimation(returnToTitleButton);
+            hideGameOverUI();
+            showLandingPage();
+        });
+
         console.log('Page loaded, landing page should be visible');
     </script>
 </body>
