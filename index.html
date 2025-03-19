@@ -100,6 +100,13 @@
             background-color: #ddd;
             border-radius: 5px;
         }
+
+        #icon-controls-label {
+            font-size: 5vw;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            text-align: center;
+        }
         
         /* Game Page Styles */
         #game-page {
@@ -333,6 +340,7 @@
             #landing-icons span { font-size: 36px; }
             .mode-button { font-size: 24px; padding: 20px; }
             #campaign-dropdown select { font-size: 20px; }
+            #icon-controls-label { font-size: 24px; }
             #game-title { font-size: 48px; }
             #title-icons span { font-size: 30px; }
             .board { 
@@ -382,6 +390,28 @@
                 </select>
             </div>
         </div>
+        <div id="icon-controls-label">Set Players</div>
+        <div class="control-group" id="icon-controls" style="width: 80%; max-width: 400px;">
+            <select id="player1Preset">
+                <option value="X">X (Default)</option>
+                <option value="⭐">⭐ Star</option>
+                <option value="🐱">🐱 Cat</option>
+                <option value="🚀">🚀 Rocket</option>
+                <option value="🌟">🌟 Sparkle</option>
+            </select>
+            <label for="player1Icon">Upload P1</label>
+            <input type="file" id="player1Icon" accept="image/*">
+            <select id="player2Preset">
+                <option value="O">O (Default)</option>
+                <option value="💥">💥 Explosion</option>
+                <option value="🐶">🐶 Dog</option>
+                <option value="🪐">🪐 Planet</option>
+                <option value="⚡">⚡ Lightning</option>
+            </select>
+            <label for="player2Icon">Upload P2</label>
+            <input type="file" id="player2Icon" accept="image/*">
+            <button id="resetIcons">Reset to Default</button>
+        </div>
     </div>
 
     <!-- Game Page -->
@@ -391,6 +421,11 @@
         <br>
         <div id="status">Player 1's turn (X)</div>
         <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
+        <div class="control-group" id="size-controls">
+            <button id="size3x3" class="active">3x3 (9 tiles)</button>
+            <button id="size4x4">4x4 (16 tiles)</button>
+            <button id="size5x5">5x5 (25 tiles)</button>
+        </div>
         <div class="board" id="board"></div>
         <div id="winner-text"></div>
         <div id="game-over-options">
@@ -398,36 +433,10 @@
             <button class="game-over-button" id="return-to-title">Return to Title Screen</button>
         </div>
         <div id="controls">
-            <div class="control-group" id="size-controls">
-                <button id="size3x3" class="active">3x3 (9 tiles)</button>
-                <button id="size4x4">4x4 (16 tiles)</button>
-                <button id="size5x5">5x5 (25 tiles)</button>
-            </div>
             <div class="control-group" id="mode-controls">
                 <button id="reset">Reset Game</button>
                 <button id="resetScores">Reset Scores</button>
                 <button id="backToMenu">Back to Menu</button>
-            </div>
-            <div class="control-group" id="icon-controls">
-                <select id="player1Preset">
-                    <option value="X">X (Default)</option>
-                    <option value="⭐">⭐ Star</option>
-                    <option value="🐱">🐱 Cat</option>
-                    <option value="🚀">🚀 Rocket</option>
-                    <option value="🌟">🌟 Sparkle</option>
-                </select>
-                <label for="player1Icon">Upload P1</label>
-                <input type="file" id="player1Icon" accept="image/*">
-                <select id="player2Preset">
-                    <option value="O">O (Default)</option>
-                    <option value="💥">💥 Explosion</option>
-                    <option value="🐶">🐶 Dog</option>
-                    <option value="🪐">🪐 Planet</option>
-                    <option value="⚡">⚡ Lightning</option>
-                </select>
-                <label for="player2Icon">Upload P2</label>
-                <input type="file" id="player2Icon" accept="image/*">
-                <button id="resetIcons">Reset to Default</button>
             </div>
         </div>
     </div>
@@ -440,6 +449,11 @@
         const landingStartCampaign = document.getElementById('landing-startCampaign');
         const campaignDropdown = document.getElementById('campaign-dropdown');
         const campaignSelect = document.getElementById('campaign-select');
+        const player1IconInput = document.getElementById('player1Icon');
+        const player2IconInput = document.getElementById('player2Icon');
+        const resetIconsButton = document.getElementById('resetIcons');
+        const player1Preset = document.getElementById('player1Preset');
+        const player2Preset = document.getElementById('player2Preset');
 
         // Game Page Elements
         const gamePage = document.getElementById('game-page');
@@ -456,11 +470,6 @@
         const size5x5Button = document.getElementById('size5x5');
         const resetScoresButton = document.getElementById('resetScores');
         const backToMenuButton = document.getElementById('backToMenu');
-        const player1IconInput = document.getElementById('player1Icon');
-        const player2IconInput = document.getElementById('player2Icon');
-        const resetIconsButton = document.getElementById('resetIcons');
-        const player1Preset = document.getElementById('player1Preset');
-        const player2Preset = document.getElementById('player2Preset');
         
         let gameBoard = [];
         let gameActive = true;
@@ -494,6 +503,16 @@
             '4': { player1: 0, player2: 0, draws: 0 },
             '5': { player1: 0, player2: 0, draws: 0 }
         };
+
+        // Initialize preset dropdowns with stored values
+        function initializePresets() {
+            if (!PLAYER1.startsWith('data:image')) {
+                player1Preset.value = PLAYER1;
+            }
+            if (!PLAYER2.startsWith('data:image')) {
+                player2Preset.value = PLAYER2;
+            }
+        }
 
         function generateWinningCombinations(size) {
             const combos = [];
@@ -961,12 +980,11 @@
         function resetIcons() {
             PLAYER1 = DEFAULT_PLAYER1;
             userPLAYER2 = DEFAULT_PLAYER2;
-            PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
+            PLAYER2 = DEFAULT_PLAYER2;
             localStorage.removeItem('player1Icon');
             localStorage.removeItem('player2Icon');
             player1Preset.value = DEFAULT_PLAYER1;
             player2Preset.value = DEFAULT_PLAYER2;
-            resetGame();
         }
 
         // Navigation Functions
@@ -988,6 +1006,7 @@
             document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
             winnerText.classList.remove('winner-animation');
             winnerText.style.display = 'none';
+            initializePresets(); // Re-initialize presets when returning to title screen
         }
 
         // Event Listeners
@@ -1018,15 +1037,13 @@
         player1Preset.addEventListener('change', (e) => {
             PLAYER1 = e.target.value;
             localStorage.setItem('player1Icon', PLAYER1);
-            resetGame();
             addButtonAnimation(player1Preset);
         });
 
         player2Preset.addEventListener('change', (e) => {
             userPLAYER2 = e.target.value;
-            PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
+            PLAYER2 = userPLAYER2;
             localStorage.setItem('player2Icon', userPLAYER2);
-            resetGame();
             addButtonAnimation(player2Preset);
         });
 
@@ -1042,8 +1059,7 @@
                 reader.onload = (event) => {
                     PLAYER1 = event.target.result;
                     localStorage.setItem('player1Icon', PLAYER1);
-                    player1Preset.value = '';
-                    resetGame();
+                    player1Preset.value = ''; // Clear preset selection when uploading custom image
                 };
                 reader.readAsDataURL(file);
             }
@@ -1060,10 +1076,9 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     userPLAYER2 = event.target.result;
-                    PLAYER2 = gameMode === "campaign" && currentOpponent < campaignOpponents.length ? campaignOpponents[currentOpponent].icon : userPLAYER2;
+                    PLAYER2 = userPLAYER2;
                     localStorage.setItem('player2Icon', userPLAYER2);
-                    player2Preset.value = '';
-                    resetGame();
+                    player2Preset.value = ''; // Clear preset selection when uploading custom image
                 };
                 reader.readAsDataURL(file);
             }
@@ -1101,6 +1116,8 @@
             showLandingPage();
         });
 
+        // Initialize presets on page load
+        initializePresets();
         console.log('Page loaded, landing page should be visible');
     </script>
 </body>
