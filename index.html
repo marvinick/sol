@@ -334,6 +334,22 @@
             transform: scale(0.95);
         }
 
+        .player-icon {
+            display: inline-block;
+            width: 2em; /* Increased from 1em to 2em */
+            height: 2em; /* Increased from 1em to 2em */
+            vertical-align: middle;
+            margin: 0 5px;
+            font-size: 1.5em; /* Added to increase emoji size */
+        }
+
+        .player-icon img {
+            width: 100%; /* Changed from max-width to width for consistent sizing */
+            height: 100%; /* Changed from max-height to height for consistent sizing */
+            vertical-align: middle;
+            object-fit: contain; /* Ensures GIFs scale properly */
+        }
+
         @media (min-width: 600px) {
             body { padding: 10px; }
             #landing-title { font-size: 60px; }
@@ -363,6 +379,11 @@
             .game-over-button {
                 font-size: 24px;
                 padding: 15px 30px;
+            }
+            .player-icon {
+                width: 2em; /* Maintain consistent size on desktop */
+                height: 2em;
+                font-size: 1.5em; /* Maintain emoji size on desktop */
             }
         }
     </style>
@@ -420,7 +441,11 @@
         <br>
         <br>
         <div id="status">Player 1's turn (X)</div>
-        <div id="scores">Scores (3x3) - Player 1: 0, Player 2/AI: 0, Draws: 0</div>
+        <div id="scores">
+            Player 1: <span id="player1-icon" class="player-icon"></span> 0, 
+            Player 2: <span id="player2-icon" class="player-icon"></span> 0, 
+            Draws: 0
+        </div>
         <div class="control-group" id="size-controls">
             <button id="size3x3" class="active">3x3 (9 tiles)</button>
             <button id="size4x4">4x4 (16 tiles)</button>
@@ -460,6 +485,8 @@
         const board = document.getElementById('board');
         const status = document.getElementById('status');
         const scoresDisplay = document.getElementById('scores');
+        const player1IconDisplay = document.getElementById('player1-icon');
+        const player2IconDisplay = document.getElementById('player2-icon');
         const winnerText = document.getElementById('winner-text');
         const gameOverOptions = document.getElementById('game-over-options');
         const playAgainButton = document.getElementById('play-again');
@@ -836,15 +863,49 @@
         }
 
         function updateScoresDisplay() {
-            if (gameMode === "campaign") {
-                if (currentOpponent >= campaignOpponents.length) {
-                    scoresDisplay.textContent = `Campaign Completed! (${boardSize}x${boardSize})`;
-                } else {
-                    scoresDisplay.textContent = `Campaign Progress: Opponent ${currentOpponent + 1}/${campaignOpponents.length} (${boardSize}x${boardSize})`;
-                }
+            // Clear existing content
+            player1IconDisplay.innerHTML = '';
+            player2IconDisplay.innerHTML = '';
+
+            // Display Player 1 icon
+            if (PLAYER1.startsWith('data:image')) {
+                const img = document.createElement('img');
+                img.src = PLAYER1;
+                player1IconDisplay.appendChild(img);
             } else {
-                scoresDisplay.textContent = `Scores (${boardSize}x${boardSize}) - Player 1: ${scores[boardSize].player1}, Player 2/AI: ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws}`;
+                player1IconDisplay.textContent = PLAYER1;
             }
+
+            // Display Player 2 icon
+            if (PLAYER2.startsWith('data:image')) {
+                const img = document.createElement('img');
+                img.src = PLAYER2;
+                player2IconDisplay.appendChild(img);
+            } else {
+                player2IconDisplay.textContent = PLAYER2;
+            }
+
+            let opponentText = '';
+            if (gameMode === "singleAI") {
+                opponentText = 'vs AI';
+            } else if (gameMode === "friend") {
+                opponentText = 'vs Friend';
+            } else if (gameMode === "campaign") {
+                if (currentOpponent >= campaignOpponents.length) {
+                    scoresDisplay.textContent = `Campaign Completed!`;
+                    player1IconDisplay.innerHTML = '';
+                    player2IconDisplay.innerHTML = '';
+                    return;
+                } else {
+                    opponentText = `Campaign: Opponent ${currentOpponent + 1}/${campaignOpponents.length}`;
+                    scoresDisplay.textContent = opponentText;
+                    player1IconDisplay.innerHTML = '';
+                    player2IconDisplay.innerHTML = '';
+                    return;
+                }
+            }
+
+            scoresDisplay.innerHTML = `Player 1: <span id="player1-icon" class="player-icon">${player1IconDisplay.innerHTML}</span> ${scores[boardSize].player1}, Player 2: <span id="player2-icon" class="player-icon">${player2IconDisplay.innerHTML}</span> ${scores[boardSize].player2}, Draws: ${scores[boardSize].draws} (${opponentText})`;
         }
 
         function updateStatus() {
@@ -855,7 +916,7 @@
                     status.textContent = "Game over! Choose a mode to play.";
                 }
             } else {
-                const playerIcon = currentPlayer === 1 ? (PLAYER1.startsWith('data:image') ? 'Player 1' : PLAYER1) : (PLAYER2.startsWith('data:image') ? 'Player 2/AI' : PLAYER2);
+                const playerIcon = currentPlayer === 1 ? (PLAYER1.startsWith('data:image') ? 'Player 1' : PLAYER1) : (PLAYER2.startsWith('data:image') ? 'Player 2' : PLAYER2);
                 if (gameMode === "campaign" && currentPlayer === 2) {
                     status.textContent = `${campaignOpponents[currentOpponent].name}'s turn (${playerIcon})`;
                 } else {
@@ -985,6 +1046,7 @@
             localStorage.removeItem('player2Icon');
             player1Preset.value = DEFAULT_PLAYER1;
             player2Preset.value = DEFAULT_PLAYER2;
+            updateScoresDisplay();
         }
 
         // Navigation Functions
@@ -1006,7 +1068,7 @@
             document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
             winnerText.classList.remove('winner-animation');
             winnerText.style.display = 'none';
-            initializePresets(); // Re-initialize presets when returning to title screen
+            initializePresets();
         }
 
         // Event Listeners
@@ -1038,6 +1100,7 @@
             PLAYER1 = e.target.value;
             localStorage.setItem('player1Icon', PLAYER1);
             addButtonAnimation(player1Preset);
+            updateScoresDisplay();
         });
 
         player2Preset.addEventListener('change', (e) => {
@@ -1045,6 +1108,7 @@
             PLAYER2 = userPLAYER2;
             localStorage.setItem('player2Icon', userPLAYER2);
             addButtonAnimation(player2Preset);
+            updateScoresDisplay();
         });
 
         player1IconInput.addEventListener('change', (e) => {
@@ -1059,7 +1123,8 @@
                 reader.onload = (event) => {
                     PLAYER1 = event.target.result;
                     localStorage.setItem('player1Icon', PLAYER1);
-                    player1Preset.value = ''; // Clear preset selection when uploading custom image
+                    player1Preset.value = '';
+                    updateScoresDisplay();
                 };
                 reader.readAsDataURL(file);
             }
@@ -1078,7 +1143,8 @@
                     userPLAYER2 = event.target.result;
                     PLAYER2 = userPLAYER2;
                     localStorage.setItem('player2Icon', userPLAYER2);
-                    player2Preset.value = ''; // Clear preset selection when uploading custom image
+                    player2Preset.value = '';
+                    updateScoresDisplay();
                 };
                 reader.readAsDataURL(file);
             }
@@ -1118,6 +1184,7 @@
 
         // Initialize presets on page load
         initializePresets();
+        updateScoresDisplay();
         console.log('Page loaded, landing page should be visible');
     </script>
 </body>
