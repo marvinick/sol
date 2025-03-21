@@ -336,18 +336,18 @@
 
         .player-icon {
             display: inline-block;
-            width: 2em; /* Increased from 1em to 2em */
-            height: 2em; /* Increased from 1em to 2em */
+            width: 2em;
+            height: 2em;
             vertical-align: middle;
             margin: 0 5px;
-            font-size: 1.5em; /* Added to increase emoji size */
+            font-size: 1.5em;
         }
 
         .player-icon img {
-            width: 100%; /* Changed from max-width to width for consistent sizing */
-            height: 100%; /* Changed from max-height to height for consistent sizing */
+            width: 100%;
+            height: 100%;
             vertical-align: middle;
-            object-fit: contain; /* Ensures GIFs scale properly */
+            object-fit: contain;
         }
 
         @media (min-width: 600px) {
@@ -381,9 +381,9 @@
                 padding: 15px 30px;
             }
             .player-icon {
-                width: 2em; /* Maintain consistent size on desktop */
+                width: 2em;
                 height: 2em;
-                font-size: 1.5em; /* Maintain emoji size on desktop */
+                font-size: 1.5em;
             }
         }
     </style>
@@ -626,6 +626,11 @@
                     gameActive = false;
                     highlightWinningCells(winningCombo);
                     startConfetti();
+                    if (currentOpponent < campaignOpponents.length - 1) {
+                        playAgainButton.textContent = "Continue to Next Opponent";
+                    } else {
+                        playAgainButton.textContent = "Play Again";
+                    }
                 } else {
                     const winnerMessage = `Player ${currentPlayer} wins!`;
                     status.textContent = winnerMessage;
@@ -634,6 +639,7 @@
                     showWinnerAnimation(winnerMessage);
                     startConfetti();
                     updateScore(currentPlayer === 1 ? 'player1' : 'player2');
+                    playAgainButton.textContent = "Play Again";
                 }
                 return;
             }
@@ -644,12 +650,14 @@
                     showWinnerAnimation("Draw! Fight again!");
                     gameActive = false;
                     startConfetti();
+                    playAgainButton.textContent = "Play Again";
                 } else {
                     status.textContent = "It's a draw!";
                     gameActive = false;
                     showWinnerAnimation("It's a draw!");
                     startConfetti();
                     updateScore('draws');
+                    playAgainButton.textContent = "Play Again";
                 }
                 return;
             }
@@ -718,6 +726,7 @@
                     gameActive = false;
                     highlightWinningCells(winningCombo);
                     startConfetti();
+                    playAgainButton.textContent = "Play Again";
                 } else {
                     status.textContent = "AI wins!";
                     gameActive = false;
@@ -725,6 +734,7 @@
                     showWinnerAnimation("AI wins!");
                     startConfetti();
                     updateScore('player2');
+                    playAgainButton.textContent = "Play Again";
                 }
                 return;
             }
@@ -735,12 +745,14 @@
                     showWinnerAnimation("Draw! Fight again!");
                     gameActive = false;
                     startConfetti();
+                    playAgainButton.textContent = "Play Again";
                 } else {
                     status.textContent = "It's a draw!";
                     gameActive = false;
                     showWinnerAnimation("It's a draw!");
                     startConfetti();
                     updateScore('draws');
+                    playAgainButton.textContent = "Play Again";
                 }
                 return;
             }
