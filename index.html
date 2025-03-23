@@ -125,17 +125,17 @@
         }
 
         .player-icon-display span {
-            font-size: 8vw; /* Increased from 6vw */
+            font-size: 8vw;
         }
 
         .player-icon-display img {
-            width: 8vw; /* Increased from 6vw */
-            height: 8vw; /* Increased from 6vw */
+            width: 8vw;
+            height: 8vw;
             object-fit: contain;
         }
 
         .player-icon-label {
-            font-size: 3.5vw; /* Increased from 3vw */
+            font-size: 3.5vw;
             font-weight: bold;
         }
 
@@ -420,14 +420,14 @@
                 gap: 30px;
             }
             .player-icon-display span {
-                font-size: 48px; /* Increased from 36px */
+                font-size: 48px;
             }
             .player-icon-display img {
-                width: 48px; /* Increased from 36px */
-                height: 48px; /* Increased from 36px */
+                width: 48px;
+                height: 48px;
             }
             .player-icon-label {
-                font-size: 20px; /* Increased from 18px */
+                font-size: 20px;
             }
         }
     </style>
@@ -723,7 +723,7 @@
                         playAgainButton.textContent = "Play Again";
                     }
                 } else {
-                    const winnerMessage = `Player ${currentPlayer} wins!`;
+                    const winnerMessage = currentPlayer === 1 ? "You win!" : `Player ${currentPlayer} wins!`;
                     status.textContent = winnerMessage;
                     gameActive = false;
                     highlightWinningCells(winningCombo);
@@ -819,10 +819,10 @@
                     startConfetti();
                     playAgainButton.textContent = "Play Again";
                 } else {
-                    status.textContent = "AI wins!";
+                    status.textContent = "Player 2 wins!"; // Changed from "AI wins!" for consistency
                     gameActive = false;
                     highlightWinningCells(winningCombo);
-                    showWinnerAnimation("AI wins!");
+                    showWinnerAnimation("Player 2 wins!");
                     startConfetti();
                     updateScore('player2');
                     playAgainButton.textContent = "Play Again";
